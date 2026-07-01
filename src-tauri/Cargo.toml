@@ -1,18 +1,18 @@
 [package]
-name = "llm-wiki"
+name = "wikimind"
 version = "0.6.0"
-description = "LLM Wiki - A personal knowledge base for LLM concepts"
+description = "WikiMind - A self-organizing knowledge agent with claim-decay and autonomous maintenance"
 authors = []
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "llm_wiki_lib"
+name = "wikimind_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [[bin]]
-name = "llm-wiki"
+name = "wikimind"
 path = "src/main.rs"
 
 [build-dependencies]
@@ -62,6 +62,7 @@ sha2 = "0.10"
 md-5 = "0.10"
 notify = "8"
 walkdir = "2"
+cron = "0.12"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }

@@ -1217,6 +1217,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cron"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f8c3e73077b4b4a6ab1ea5047c37c57aee77657bc8ecd6f29b0af082d0b0c07"
+dependencies = [
+ "chrono",
+ "nom 7.1.3",
+ "once_cell",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4458,42 +4469,6 @@ name = "litrs"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
-
-[[package]]
-name = "llm-wiki"
-version = "0.6.0"
-dependencies = [
- "arrow-array",
- "arrow-schema",
- "base64 0.22.1",
- "calamine",
- "chrono",
- "docx-rs",
- "futures",
- "image",
- "lancedb",
- "md-5",
- "notify",
- "office_oxide",
- "pdfium-render",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "sha2",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-dialog",
- "tauri-plugin-http",
- "tauri-plugin-opener",
- "tauri-plugin-store",
- "tiny_http",
- "tokio",
- "uuid",
- "walkdir",
- "which",
- "zip 2.4.2",
-]
 
 [[package]]
 name = "lock_api"
@@ -8600,6 +8575,43 @@ dependencies = [
  "env_home",
  "rustix 1.1.4",
  "winsafe",
+]
+
+[[package]]
+name = "wikimind"
+version = "0.6.0"
+dependencies = [
+ "arrow-array",
+ "arrow-schema",
+ "base64 0.22.1",
+ "calamine",
+ "chrono",
+ "cron",
+ "docx-rs",
+ "futures",
+ "image",
+ "lancedb",
+ "md-5",
+ "notify",
+ "office_oxide",
+ "pdfium-render",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-dialog",
+ "tauri-plugin-http",
+ "tauri-plugin-opener",
+ "tauri-plugin-store",
+ "tiny_http",
+ "tokio",
+ "uuid",
+ "walkdir",
+ "which",
+ "zip 2.4.2",
 ]
 
 [[package]]
