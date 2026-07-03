@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+﻿import { useCallback, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { invoke } from "@tauri-apps/api/core"
 import { RefreshCw, Search, Sparkles } from "lucide-react"
@@ -141,7 +141,7 @@ export function SkillsSection() {
       <div className="rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
         {t("settings.sections.skills.paths", {
           defaultValue:
-            "Scanned folders: .llm-wiki/skills, ~/.claude/skills, ~/.codex/skills, ~/.agents/skills.",
+            "Scanned folders: .wikimind/skills, ~/.claude/skills, ~/.codex/skills, ~/.agents/skills.",
         })}
       </div>
 
@@ -243,3 +243,4 @@ export function SkillsSection() {
     </div>
   )
 }
+

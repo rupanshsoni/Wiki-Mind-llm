@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react"
+﻿import { useEffect, useState, useCallback } from "react"
 import { Download, RefreshCw, CheckCircle2, Sparkles } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { openUrl } from "@tauri-apps/plugin-opener"
@@ -205,7 +205,7 @@ export function AboutSection() {
       </div>
 
       <div className="rounded-md border p-4 text-sm">
-        <div className="font-medium">LLM Wiki</div>
+        <div className="font-medium">WikiMind</div>
         <p className="mt-1 text-xs text-muted-foreground">
           {t("settings.sections.about.appDescription")}
           {" "}
@@ -326,3 +326,4 @@ function formatRelative(timestamp: number, t: (key: string, opts?: Record<string
   const days = Math.floor(hours / 24)
   return t("time.daysAgo", { count: days, defaultValue: `${days} d ago` })
 }
+

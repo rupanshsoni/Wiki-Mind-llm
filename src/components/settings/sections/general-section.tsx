@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next"
+﻿import { useTranslation } from "react-i18next"
 import { Label } from "@/components/ui/label"
 import type { CloseBehavior } from "@/stores/wiki-store"
 import type { SettingsDraft, DraftSetter } from "../settings-types"
@@ -55,7 +55,7 @@ export function GeneralSection({ draft, setDraft }: Props) {
           </span>
           <p className="text-xs text-muted-foreground">
             {t("settings.sections.general.autostartHint", {
-              defaultValue: "Starts LLM Wiki automatically after you sign in to this computer.",
+              defaultValue: "Starts WikiMind automatically after you sign in to this computer.",
             })}
           </p>
         </div>
@@ -94,3 +94,4 @@ export function GeneralSection({ draft, setDraft }: Props) {
     </div>
   )
 }
+

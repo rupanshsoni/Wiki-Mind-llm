@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+﻿import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   Copy,
   Eye,
@@ -130,7 +130,7 @@ export function ApiServerSection({ draft, setDraft }: Props) {
     if (!mcpEntryPath) return ""
     const env = draft.apiAllowUnauthenticated
       ? {}
-      : { LLM_WIKI_API_TOKEN: draft.apiToken || "<your-token>" }
+      : { WIKIMIND_API_TOKEN: draft.apiToken || "<your-token>" }
     return JSON.stringify(
       {
         mcpServers: {
@@ -238,7 +238,7 @@ export function ApiServerSection({ draft, setDraft }: Props) {
         <p className="mt-1 text-sm text-muted-foreground">
           {t("settings.sections.apiServer.description", {
             defaultValue:
-              "Expose LLM Wiki to your own tools through the local HTTP API, and optionally through the bundled MCP server for agent clients.",
+              "Expose WikiMind to your own tools through the local HTTP API, and optionally through the bundled MCP server for agent clients.",
           })}
         </p>
       </div>
@@ -349,7 +349,7 @@ export function ApiServerSection({ draft, setDraft }: Props) {
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             {t("settings.sections.apiServer.tokenHint", {
               defaultValue:
-                "Required unless unauthenticated access is enabled. Send as `Authorization: Bearer <token>` or `X-LLM-Wiki-Token: <token>`. The environment variable LLM_WIKI_API_TOKEN overrides this field if set.",
+                "Required unless unauthenticated access is enabled. Send as `Authorization: Bearer <token>` or `X-WikiMind-Token: <token>`. The environment variable WIKIMIND_API_TOKEN overrides this field if set.",
             })}
           </p>
         </div>
@@ -428,7 +428,7 @@ export function ApiServerSection({ draft, setDraft }: Props) {
           {health?.tokenSource === "env" && (
             <span className="text-xs text-amber-700 dark:text-amber-400">
               {t("settings.sections.apiServer.envTokenActive", {
-                defaultValue: "LLM_WIKI_API_TOKEN is active and overrides this field",
+                defaultValue: "WIKIMIND_API_TOKEN is active and overrides this field",
               })}
             </span>
           )}
@@ -581,7 +581,7 @@ export function ApiServerSection({ draft, setDraft }: Props) {
           <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
             {t("settings.sections.apiServer.mcpUsageHint", {
               defaultValue:
-                "Build once with `npm run mcp:build`, then configure your MCP client to run the server below. Use LLM_WIKI_API_TOKEN unless unauthenticated access is enabled.",
+                "Build once with `npm run mcp:build`, then configure your MCP client to run the server below. Use WIKIMIND_API_TOKEN unless unauthenticated access is enabled.",
             })}
           </p>
           {mcpPathError && (
@@ -597,7 +597,7 @@ export function ApiServerSection({ draft, setDraft }: Props) {
               : !mcpEntryPath
                 ? t("settings.sections.apiServer.mcpPathUnavailable", {
                     defaultValue:
-                      "MCP server entry was not found. Run `npm run mcp:build` from the LLM Wiki repository, then reopen Settings.",
+                      "MCP server entry was not found. Run `npm run mcp:build` from the WikiMind repository, then reopen Settings.",
                   })
               : sampleMcpConfig}
           </pre>
@@ -606,3 +606,4 @@ export function ApiServerSection({ draft, setDraft }: Props) {
     </div>
   )
 }
+

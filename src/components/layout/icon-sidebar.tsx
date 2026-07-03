@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import {
-  FileText, FolderOpen, Search, Network, ClipboardCheck, Settings, ArrowLeftRight, ClipboardList, Globe, MessageSquare, Sparkles,
+  FileText, FolderOpen, Search, Network, ClipboardCheck, Settings, ArrowLeftRight, ClipboardList, Globe, MessageSquare, Sparkles, Shield,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useWikiStore } from "@/stores/wiki-store"
@@ -8,7 +8,7 @@ import { useReviewStore } from "@/stores/review-store"
 import { useResearchStore } from "@/stores/research-store"
 import { useUpdateStore, hasAvailableUpdate } from "@/stores/update-store"
 import { useTranslation } from "react-i18next"
-import logoImg from "@/assets/logo.jpg"
+import logoImg from "@/assets/logo.png"
 import type { WikiState } from "@/stores/wiki-store"
 import {
   isResearchPanelVisible,
@@ -25,6 +25,7 @@ const NAV_ITEMS: { view: NavView; icon: typeof FileText; labelKey: string }[] = 
   { view: "graph", icon: Network, labelKey: "nav.graph" },
   { view: "lint", icon: ClipboardCheck, labelKey: "nav.lint" },
   { view: "review", icon: ClipboardList, labelKey: "nav.review" },
+  { view: "maintenance", icon: Shield, labelKey: "nav.maintenance" },
 ]
 
 interface IconSidebarProps {
@@ -78,7 +79,7 @@ export function IconSidebar({ onSwitchProject }: IconSidebarProps) {
         <div className="mb-2 flex items-center justify-center">
           <img
             src={logoImg}
-            alt="LLM Wiki"
+            alt="WikiMind"
             className="h-8 w-8 rounded-[22%]"
           />
         </div>
@@ -206,3 +207,4 @@ export function IconSidebar({ onSwitchProject }: IconSidebarProps) {
     </TooltipProvider>
   )
 }
+

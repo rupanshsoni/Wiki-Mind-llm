@@ -8,6 +8,7 @@ import { LintView } from "@/components/lint/lint-view"
 import { SearchView } from "@/components/search/search-view"
 import { GraphView } from "@/components/graph/graph-view"
 import { PreviewPanel } from "./preview-panel"
+import { MaintenanceDashboard } from "@/components/maintenance/maintenance-dashboard"
 
 export function ContentArea() {
   const activeView = useWikiStore((s) => s.activeView)
@@ -31,6 +32,8 @@ export function ContentArea() {
       return <SearchView />
     case "graph":
       return <GraphView />
+    case "maintenance":
+      return <MaintenanceDashboard />
     default:
       return <PreviewPanel />
   }

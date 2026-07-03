@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "LLM Wiki",
+    "title": "WikiMind",
     "subtitle": "用 LLM 构建和维护你的个人知识库"
   },
   "nav": {
@@ -13,6 +13,7 @@
     "review": "待审阅",
     "skills": "Skills",
     "settings": "设置",
+    "maintenance": "维护",
     "switchProject": "切换项目",
     "updateAvailable": "有可用更新",
     "updateAvailableSuffix": " · 有更新"
@@ -145,7 +146,7 @@
     "skillsAutoMode": "自动",
     "slashSkillHint": "选择 Skill",
     "removeSkill": "移除 {{name}}",
-    "noSkillsAvailable": "未找到 Skill。可在 .llm-wiki/skills 或用户级 skills 目录中添加 SKILL.md。",
+    "noSkillsAvailable": "未找到 Skill。可在 .wikimind/skills 或用户级 skills 目录中添加 SKILL.md。",
     "approveCommand": "批准命令",
     "skillSources": {
       "project": "项目",
@@ -303,20 +304,20 @@
         "title": "通用",
         "description": "桌面应用的启动和窗口关闭行为。",
         "autostart": "登录系统后自动启动",
-        "autostartHint": "登录这台电脑后自动启动 LLM Wiki。",
+        "autostartHint": "登录这台电脑后自动启动 WikiMind。",
         "closeBehavior": "关闭窗口时",
         "closeBehaviorHint": "点击标题栏关闭按钮时使用这个设置。托盘菜单仍可直接退出应用。",
         "closeAsk": "每次询问",
         "closeAskHint": "显示确认框。取消会隐藏窗口，并保持后台功能继续运行。",
         "closeMinimize": "隐藏窗口",
-        "closeMinimizeHint": "关闭窗口时让 LLM Wiki 留在后台运行。在 macOS 上这符合红色关闭按钮的常规行为；如果 Linux 托盘不可用，会最小化窗口而不是隐藏。",
+        "closeMinimizeHint": "关闭窗口时让 WikiMind 留在后台运行。在 macOS 上这符合红色关闭按钮的常规行为；如果 Linux 托盘不可用，会最小化窗口而不是隐藏。",
         "closeExit": "退出应用",
-        "closeExitHint": "关闭窗口时立即退出 LLM Wiki。"
+        "closeExitHint": "关闭窗口时立即退出 WikiMind。"
       },
       "skills": {
         "title": "Skills",
         "description": "扫描项目和用户级 Skill 文件夹，并选择哪些 Skill 可以在对话中使用。",
-        "paths": "扫描目录：.llm-wiki/skills、~/.claude/skills、~/.codex/skills、~/.agents/skills。",
+        "paths": "扫描目录：.wikimind/skills、~/.claude/skills、~/.codex/skills、~/.agents/skills。",
         "summary": "已启用 {{enabled}} 个 / 共发现 {{total}} 个",
         "enableAll": "全部启用",
         "disableAll": "全部禁用",
@@ -356,7 +357,7 @@
         "providerTests": "Provider 测试",
         "providerTestsHint": "连接测试用于确认 endpoint 能正常响应；功能测试会让模型执行一个极小指令。",
         "localCliIsolation": "隔离本地 CLI 配置",
-        "localCliIsolationHint": "仅用于 Claude Code 和 Codex CLI。开启后，LLM Wiki 会让 CLI 尽量忽略用户级 rules / config / MCP / tools。这是配置隔离，不是进程沙箱：CLI 仍会使用你的本机登录凭据和网络能力。若你有意依赖本机 CLI 配置，请保持关闭。",
+        "localCliIsolationHint": "仅用于 Claude Code 和 Codex CLI。开启后，WikiMind 会让 CLI 尽量忽略用户级 rules / config / MCP / tools。这是配置隔离，不是进程沙箱：CLI 仍会使用你的本机登录凭据和网络能力。若你有意依赖本机 CLI 配置，请保持关闭。",
         "localCliIsolationOn": "隔离已开启：在 CLI 支持的范围内禁用用户规则、MCP/tools 和持久会话。本机凭据和网络访问仍由 CLI 自身控制。",
         "localCliIsolationOff": "隔离已关闭：该 Provider 可以使用你平时的本地 CLI 配置。",
         "codexCliTimeout": "Codex CLI 超时时间",
@@ -461,7 +462,7 @@
       },
       "webSearch": {
         "title": "外部信息源",
-        "description": "配置 LLM Wiki 可以使用的外部信息来源。",
+        "description": "配置 WikiMind 可以使用的外部信息来源。",
         "deepResearchSources": "深度研究来源模式",
         "deepResearchSourcesHint": "网页搜索使用当前选中的在线搜索 Provider。AnyTXT 会通过本机 ATGUI.exe 的本地索引搜索文件内容。",
         "sourceWeb": "网页搜索",
@@ -549,8 +550,8 @@
         "description": "自动监控指定目录，按固定间隔导入新增或修改的文件。",
         "enable": "启用定时导入",
         "directory": "监控目录",
-        "directoryHelp": "请选择当前 LLM Wiki 项目之外的外部文件夹。raw、raw/sources、wiki、.llm-wiki 等项目内部目录会被跳过，因为资料文件夹监控已经负责这些内容。",
-        "managedPathWarning": "该路径位于当前 LLM Wiki 项目内部，已经由资料文件夹监控负责。请选择外部文件夹，避免重复扫描。",
+        "directoryHelp": "请选择当前 WikiMind 项目之外的外部文件夹。raw、raw/sources、wiki、.wikimind 等项目内部目录会被跳过，因为资料文件夹监控已经负责这些内容。",
+        "managedPathWarning": "该路径位于当前 WikiMind 项目内部，已经由资料文件夹监控负责。请选择外部文件夹，避免重复扫描。",
         "privacyNotice": "所选目录中的文件可能会被复制到当前项目，并在提取时发送给你配置的 LLM。源目录中删除文件不会自动删除项目内已导入内容。",
         "browse": "浏览",
         "selectDirectory": "选择监控目录",
@@ -563,7 +564,7 @@
       },
       "apiServer": {
         "title": "API + MCP",
-        "description": "通过本地 HTTP API 将 LLM Wiki 开放给你的脚本和工具，也可以额外启用内置 MCP 服务供智能体客户端访问。",
+        "description": "通过本地 HTTP API 将 WikiMind 开放给你的脚本和工具，也可以额外启用内置 MCP 服务供智能体客户端访问。",
         "enable": "启用本地 HTTP API",
         "enableHint": "关闭后，即使已配置 token，除 /health 外的所有接口都会返回 503。可作为不清空 token 的临时关闭开关。",
         "status": "状态",
@@ -585,10 +586,10 @@
         "mcpEnable": "启用 MCP 访问",
         "mcpEnableHint": "MCP 复用本地 API 和同一套 token 规则。保持 HTTP API 启用后，将 MCP 客户端连接到内置 Node 服务即可。",
         "mcpUsage": "MCP 使用说明",
-        "mcpUsageHint": "先执行一次 `npm run mcp:build`，然后让 MCP 客户端运行下面的服务配置。除非启用了无认证访问，否则需要设置 LLM_WIKI_API_TOKEN。",
-        "mcpPathUnavailable": "没有找到 MCP 服务入口。请在 LLM Wiki 仓库中先执行 `npm run mcp:build`，然后重新打开设置。",
+        "mcpUsageHint": "先执行一次 `npm run mcp:build`，然后让 MCP 客户端运行下面的服务配置。除非启用了无认证访问，否则需要设置 WIKIMIND_API_TOKEN。",
+        "mcpPathUnavailable": "没有找到 MCP 服务入口。请在 WikiMind 仓库中先执行 `npm run mcp:build`，然后重新打开设置。",
         "token": "访问令牌",
-        "tokenHint": "除非启用了无认证访问，否则必须配置。通过 `Authorization: Bearer <token>` 或 `X-LLM-Wiki-Token: <token>` 发送。设置了环境变量 LLM_WIKI_API_TOKEN 时优先生效。",
+        "tokenHint": "除非启用了无认证访问，否则必须配置。通过 `Authorization: Bearer <token>` 或 `X-WikiMind-Token: <token>` 发送。设置了环境变量 WIKIMIND_API_TOKEN 时优先生效。",
         "tokenPlaceholder": "粘贴已有 token，或点击生成",
         "generate": "生成新 token",
         "show": "显示",
@@ -597,7 +598,7 @@
         "copied": "已复制",
         "tokenMissing": "未配置 token —— 所有接口都会返回 401",
         "tokenUnused": "启用无认证访问时，token 不会参与鉴权",
-        "envTokenActive": "LLM_WIKI_API_TOKEN 正在生效，并会覆盖此处填写的 token",
+        "envTokenActive": "WIKIMIND_API_TOKEN 正在生效，并会覆盖此处填写的 token",
         "tokenWeak": "token 长度偏短 —— 建议使用「生成新 token」获得 256 位熵",
         "saveFirst": "保存设置后 API/MCP 改动才会生效",
         "saveFirstExample": "请先保存设置，然后再复制示例请求。",
@@ -812,3 +813,4 @@
     "daysAgo": "{{count}} 天前"
   }
 }
+

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "LLM Wiki",
+    "title": "WikiMind",
     "subtitle": "Build and maintain your personal knowledge base with LLMs"
   },
   "nav": {
@@ -13,6 +13,7 @@
     "review": "Review",
     "skills": "Skills",
     "settings": "Settings",
+    "maintenance": "Maintenance",
     "switchProject": "Switch Project",
     "updateAvailable": "Update available",
     "updateAvailableSuffix": " · update"
@@ -145,7 +146,7 @@
     "skillsAutoMode": "Auto",
     "slashSkillHint": "Select a skill",
     "removeSkill": "Remove {{name}}",
-    "noSkillsAvailable": "No skills found. Add SKILL.md files under .llm-wiki/skills or your user skills folder.",
+    "noSkillsAvailable": "No skills found. Add SKILL.md files under .wikimind/skills or your user skills folder.",
     "approveCommand": "Approve command",
     "skillSources": {
       "project": "Project",
@@ -303,20 +304,20 @@
         "title": "General",
         "description": "Startup and window behavior for the desktop app.",
         "autostart": "Launch at system startup",
-        "autostartHint": "Starts LLM Wiki automatically after you sign in to this computer.",
+        "autostartHint": "Starts WikiMind automatically after you sign in to this computer.",
         "closeBehavior": "When closing the window",
         "closeBehaviorHint": "This setting applies when you click the title-bar close button. The tray menu can still quit the app directly.",
         "closeAsk": "Ask every time",
         "closeAskHint": "Show a confirmation. Cancel hides the window and keeps background features running.",
         "closeMinimize": "Hide window",
-        "closeMinimizeHint": "Keep LLM Wiki running in the background when the window closes. On macOS this matches the normal red close button behavior. If a Linux tray is unavailable, the window is minimized instead of hidden.",
+        "closeMinimizeHint": "Keep WikiMind running in the background when the window closes. On macOS this matches the normal red close button behavior. If a Linux tray is unavailable, the window is minimized instead of hidden.",
         "closeExit": "Quit app",
-        "closeExitHint": "Exit LLM Wiki immediately when the window closes."
+        "closeExitHint": "Exit WikiMind immediately when the window closes."
       },
       "skills": {
         "title": "Skills",
         "description": "Scan project and user skill folders, then choose which skills can be used from Chat.",
-        "paths": "Scanned folders: .llm-wiki/skills, ~/.claude/skills, ~/.codex/skills, ~/.agents/skills.",
+        "paths": "Scanned folders: .wikimind/skills, ~/.claude/skills, ~/.codex/skills, ~/.agents/skills.",
         "summary": "{{enabled}} enabled / {{total}} discovered",
         "enableAll": "Enable all",
         "disableAll": "Disable all",
@@ -356,7 +357,7 @@
         "providerTests": "Provider tests",
         "providerTestsHint": "Connection test verifies the endpoint can respond. Functional test asks the model to follow a tiny instruction.",
         "localCliIsolation": "Isolate local CLI configuration",
-        "localCliIsolationHint": "Optional for Claude Code and Codex CLI. When enabled, LLM Wiki asks the CLI to ignore user-level rules/config/MCP/tools where supported. This is configuration isolation, not a process sandbox: the CLI still uses your local login credentials and network access. Leave off if you intentionally rely on your local CLI setup.",
+        "localCliIsolationHint": "Optional for Claude Code and Codex CLI. When enabled, WikiMind asks the CLI to ignore user-level rules/config/MCP/tools where supported. This is configuration isolation, not a process sandbox: the CLI still uses your local login credentials and network access. Leave off if you intentionally rely on your local CLI setup.",
         "localCliIsolationOn": "Isolation on: user CLI rules, MCP/tools, and persisted sessions are disabled where the CLI supports it. Local credentials and network access are still controlled by the CLI itself.",
         "localCliIsolationOff": "Isolation off: this provider can use your normal local CLI configuration.",
         "codexCliTimeout": "Codex CLI timeout",
@@ -461,7 +462,7 @@
       },
       "webSearch": {
         "title": "External Information Sources",
-        "description": "Configure external information sources that LLM Wiki can use.",
+        "description": "Configure external information sources that WikiMind can use.",
         "deepResearchSources": "Deep Research source mode",
         "deepResearchSourcesHint": "Web Search uses the selected online provider. AnyTXT searches local indexed files through ATGUI.exe on this machine.",
         "sourceWeb": "Web Search",
@@ -549,8 +550,8 @@
         "description": "Automatically monitor a directory and import new or modified files at regular intervals.",
         "enable": "Enable scheduled import",
         "directory": "Monitor Directory",
-        "directoryHelp": "Choose an external folder outside the current LLM Wiki project. Project folders such as raw, raw/sources, wiki, and .llm-wiki are skipped because source folder monitoring already handles them.",
-        "managedPathWarning": "This path is inside the current LLM Wiki project and is already managed by source folder monitoring. Pick an external folder to avoid duplicate scans.",
+        "directoryHelp": "Choose an external folder outside the current WikiMind project. Project folders such as raw, raw/sources, wiki, and .wikimind are skipped because source folder monitoring already handles them.",
+        "managedPathWarning": "This path is inside the current WikiMind project and is already managed by source folder monitoring. Pick an external folder to avoid duplicate scans.",
         "privacyNotice": "Files from the selected directory may be copied into this project and sent to your configured LLM during ingest. Removed files are not automatically deleted from the project.",
         "browse": "Browse",
         "selectDirectory": "Select Directory to Monitor",
@@ -563,7 +564,7 @@
       },
       "apiServer": {
         "title": "API + MCP",
-        "description": "Expose LLM Wiki to your own tools through the local HTTP API, and optionally through the bundled MCP server for agent clients.",
+        "description": "Expose WikiMind to your own tools through the local HTTP API, and optionally through the bundled MCP server for agent clients.",
         "enable": "Enable local HTTP API",
         "enableHint": "Disable to make every non-/health endpoint return 503 even if a token is configured. Useful as a kill-switch without unsetting the token.",
         "status": "Status",
@@ -585,10 +586,10 @@
         "mcpEnable": "Enable MCP access",
         "mcpEnableHint": "MCP uses the local API and the same token rules. Keep the HTTP API enabled, then connect an MCP client to the bundled Node server.",
         "mcpUsage": "MCP usage",
-        "mcpUsageHint": "Build once with `npm run mcp:build`, then configure your MCP client to run the server below. Use LLM_WIKI_API_TOKEN unless unauthenticated access is enabled.",
-        "mcpPathUnavailable": "MCP server entry was not found. Run `npm run mcp:build` from the LLM Wiki repository, then reopen Settings.",
+        "mcpUsageHint": "Build once with `npm run mcp:build`, then configure your MCP client to run the server below. Use WIKIMIND_API_TOKEN unless unauthenticated access is enabled.",
+        "mcpPathUnavailable": "MCP server entry was not found. Run `npm run mcp:build` from the WikiMind repository, then reopen Settings.",
         "token": "Access token",
-        "tokenHint": "Required unless unauthenticated access is enabled. Send as `Authorization: Bearer <token>` or `X-LLM-Wiki-Token: <token>`. The environment variable LLM_WIKI_API_TOKEN overrides this field if set.",
+        "tokenHint": "Required unless unauthenticated access is enabled. Send as `Authorization: Bearer <token>` or `X-WikiMind-Token: <token>`. The environment variable WIKIMIND_API_TOKEN overrides this field if set.",
         "tokenPlaceholder": "Paste an existing token or click Generate",
         "generate": "Generate new token",
         "show": "Show",
@@ -597,7 +598,7 @@
         "copied": "Copied",
         "tokenMissing": "No token — every endpoint will return 401",
         "tokenUnused": "Token is not used while unauthenticated access is enabled",
-        "envTokenActive": "LLM_WIKI_API_TOKEN is active and overrides this field",
+        "envTokenActive": "WIKIMIND_API_TOKEN is active and overrides this field",
         "tokenWeak": "Token is short — consider Generate for 256-bit entropy",
         "saveFirst": "Save settings to apply API/MCP changes",
         "saveFirstExample": "Save settings first, then copy an example request.",
@@ -812,3 +813,4 @@
     "daysAgo": "{{count}} d ago"
   }
 }
+

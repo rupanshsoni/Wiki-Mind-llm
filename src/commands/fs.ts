@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core"
+﻿import { invoke } from "@tauri-apps/api/core"
 import type { FileNode, WikiProject } from "@/types/wiki"
 import { ensureProjectId, upsertProjectInfo } from "@/lib/project-identity"
 import { isAbsolutePath } from "@/lib/path-utils"
@@ -36,7 +36,7 @@ export async function writeFileAtomic(path: string, contents: string): Promise<v
 
 /**
  * List a directory tree. Dot-prefixed entries (`.claude`, `.env`,
- * `.llm-wiki`, …) are hidden by default; pass `includeHidden: true`
+ * `.wikimind`, …) are hidden by default; pass `includeHidden: true`
  * only for the `raw/sources` content area, where dotfolders are
  * legitimate user-added sources. See `entry_is_visible` in fs.rs.
  */
@@ -203,3 +203,4 @@ export async function apiServerReloadConfig(): Promise<string> {
 export async function mcpServerEntryPath(): Promise<string> {
   return invoke<string>("mcp_server_entry_path")
 }
+
