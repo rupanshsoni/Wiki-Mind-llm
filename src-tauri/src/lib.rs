@@ -3,11 +3,13 @@ mod api_server;
 mod clip_server;
 mod commands;
 mod cors;
+mod maintenance;
 mod panic_guard;
 mod proxy;
 mod server_bind;
 mod tray;
 mod types;
+
 
 use panic_guard::run_guarded;
 use serde::{Deserialize, Serialize};
@@ -29,11 +31,14 @@ struct AgentProjectEntry {
 }
 
 #[derive(Debug, Clone, Default)]
-struct AgentRuntimeConfig {
-    embedding: Option<commands::search::SearchEmbeddingConfig>,
-    llm: Option<agent::provider::LlmConfig>,
-    web_search: Option<agent::tools::WebSearchConfig>,
-    anytxt: Option<agent::tools::AnyTxtConfig>,
+pub(crate) struct AgentRuntimeConfig {
+    pub(crate) embedding: Option<commands::search::SearchEmbeddingConfig>,
+    pub(crate) llm: Option<agent::provider::LlmConfig>,
+    pub(crate) web_search: Option<agent::tools::WebSearchConfig>,
+    pub(crate) anytxt: Option<agent::tools::AnyTxtConfig>,
+    pub(crate) judge1: Option<agent::provider::LlmConfig>,
+    pub(crate) judge2: Option<agent::provider::LlmConfig>,
+    pub(crate) judge3: Option<agent::provider::LlmConfig>,
 }
 
 #[tauri::command]
@@ -319,7 +324,7 @@ fn mcp_server_entry_path(app: tauri::AppHandle) -> Result<String, String> {
             }
         }
 
-        Err("MCP server entry was not found. Run `npm run mcp:build` from the LLM Wiki repository, then reopen Settings.".to_string())
+        Err("MCP server entry was not found. Run `npm run mcp:build` from the WikiMind repository, then reopen Settings.".to_string())
     })
 }
 
@@ -398,13 +403,15 @@ fn load_agent_projects(app: &tauri::AppHandle) -> Vec<AgentProjectEntry> {
     projects
 }
 
+
+
 fn load_agent_app_state(app: &tauri::AppHandle) -> Option<Value> {
     let path = app.path().app_data_dir().ok()?.join("app-state.json");
     let raw = std::fs::read_to_string(path).ok()?;
     serde_json::from_str(&raw).ok()
 }
 
-fn load_agent_runtime_config(app: &tauri::AppHandle) -> AgentRuntimeConfig {
+pub(crate) fn load_agent_runtime_config(app: &tauri::AppHandle) -> AgentRuntimeConfig {
     let Some(parsed) = load_agent_app_state(app) else {
         return AgentRuntimeConfig::default();
     };
@@ -426,13 +433,25 @@ fn load_agent_runtime_config(app: &tauri::AppHandle) -> AgentRuntimeConfig {
             .and_then(|value| value.get("anyTxt"))
             .cloned()
             .and_then(|value| serde_json::from_value(value).ok()),
+        judge1: parsed
+            .get("judge1Config")
+            .cloned()
+            .and_then(|value| serde_json::from_value(value).ok()),
+        judge2: parsed
+            .get("judge2Config")
+            .cloned()
+            .and_then(|value| serde_json::from_value(value).ok()),
+        judge3: parsed
+            .get("judge3Config")
+            .cloned()
+            .and_then(|value| serde_json::from_value(value).ok()),
     }
 }
 
 fn read_project_id(path: &str) -> Option<String> {
     let raw = std::fs::read_to_string(
         std::path::Path::new(path)
-            .join(".llm-wiki")
+            .join(".wikimind")
             .join("project.json"),
     )
     .ok()?;
@@ -593,6 +612,7 @@ pub fn run() {
             app.manage(agent::session::AgentSessionStore::default());
             app.manage(agent::cancel::AgentCancellationRegistry::default());
             app.manage(CloseBehaviorState(Mutex::new("minimize".to_string())));
+            app.manage(maintenance::scheduler::MaintenanceScheduler::new(app.handle().clone()));
             app.manage(TrayAvailabilityState(Mutex::new(false)));
             // Start the API before optional desktop integrations so the
             // backend is reachable if tray setup or another integration fails.
@@ -680,6 +700,24 @@ pub fn run() {
             commands::file_sync::ignore_file_change_task,
             set_proxy_env,
             set_close_behavior,
+            commands::youtube::ingest_youtube_url,
+            commands::github::ingest_github_url,
+            maintenance::maintenance_list_claims,
+            maintenance::maintenance_get_claim,
+            maintenance::maintenance_create_claim,
+            maintenance::maintenance_update_claim,
+            maintenance::maintenance_decay_status,
+            maintenance::maintenance_list_contradictions,
+            maintenance::maintenance_get_contradiction,
+            maintenance::maintenance_resolve_contradiction,
+            maintenance::maintenance_job_history,
+            maintenance::maintenance_scheduler_status,
+            maintenance::maintenance_run_job,
+            maintenance::maintenance_pause_scheduler,
+            maintenance::maintenance_resume_scheduler,
+            maintenance::maintenance_update_schedule_config,
+            maintenance::maintenance_run_eval,
+            maintenance::maintenance_get_eval_results,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -707,9 +745,9 @@ pub fn run() {
                             let confirmed = app
                                 .dialog()
                                 .message(
-                                    "Quit LLM Wiki? Choose Quit to exit. Choose Hide Window to keep background features running.",
+                                    "Quit WikiMind? Choose Quit to exit. Choose Hide Window to keep background features running.",
                                 )
-                                .title("LLM Wiki")
+                                .title("WikiMind")
                                 .buttons(MessageDialogButtons::OkCancelCustom(
                                     "Quit".to_string(),
                                     "Hide Window".to_string(),

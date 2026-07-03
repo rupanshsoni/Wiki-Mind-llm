@@ -45,7 +45,7 @@ pub struct ChunkUpsertInput {
 }
 
 fn db_path(project_path: &str) -> String {
-    format!("{}/.llm-wiki/lancedb", project_path.replace('\\', "/"))
+    format!("{}/.wikimind/lancedb", project_path.replace('\\', "/"))
 }
 
 fn vectorstore_v2_lock(project_path: &str) -> Arc<tokio::sync::RwLock<()>> {
@@ -918,7 +918,7 @@ mod tests_v2 {
 
     fn chunk_table_version_count(project_path: &PathBuf) -> usize {
         let versions_dir = project_path
-            .join(".llm-wiki")
+            .join(".wikimind")
             .join("lancedb")
             .join(format!("{TABLE_V2}.lance"))
             .join("_versions");

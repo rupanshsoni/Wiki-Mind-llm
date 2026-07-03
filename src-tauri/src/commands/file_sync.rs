@@ -16,8 +16,8 @@ use walkdir::WalkDir;
 
 use crate::panic_guard::run_guarded;
 
-const SNAPSHOT_FILE: &str = ".llm-wiki/file-snapshot.json";
-const QUEUE_FILE: &str = ".llm-wiki/file-change-queue.json";
+const SNAPSHOT_FILE: &str = ".wikimind/file-snapshot.json";
+const QUEUE_FILE: &str = ".wikimind/file-change-queue.json";
 const EVENT_QUEUE_UPDATED: &str = "file-sync://queue-updated";
 const EVENT_CHANGED: &str = "file-sync://changed";
 const MAX_HASH_BYTES: u64 = 32 * 1024 * 1024;
@@ -1076,8 +1076,8 @@ fn should_watch_rel(rel: &str, rules: &SourceWatchRules) -> bool {
         return false;
     }
     let lower = rel.to_lowercase();
-    if lower.contains("/.llm-wiki/")
-        || lower.starts_with(".llm-wiki/")
+    if lower.contains("/.wikimind/")
+        || lower.starts_with(".wikimind/")
         // App-managed generated media is intentionally ignored here. The
         // source markdown references drive graph/index refresh; media bytes
         // themselves are not analyzed by the wiki pipeline.
@@ -1241,8 +1241,8 @@ fn emit_changed_batch(app: &AppHandle, project_id: &str, tasks: Vec<FileChangeTa
 }
 
 fn ensure_sync_dir(root: &Path) -> Result<(), String> {
-    fs::create_dir_all(root.join(".llm-wiki"))
-        .map_err(|e| format!("Failed to create .llm-wiki: {e}"))
+    fs::create_dir_all(root.join(".wikimind"))
+        .map_err(|e| format!("Failed to create .wikimind: {e}"))
 }
 
 fn read_snapshot(root: &Path) -> Result<FileSnapshot, String> {
@@ -1638,7 +1638,7 @@ mod tests {
         assert!(should_watch_rel("raw/sources/document.docx", &rules));
         assert!(should_watch_rel("wiki/concepts/topic.md", &rules));
         assert!(!should_watch_rel(
-            ".llm-wiki/file-change-queue.json",
+            ".wikimind/file-change-queue.json",
             &rules
         ));
         assert!(!should_watch_rel("raw/sources/~$Document.docx", &rules));

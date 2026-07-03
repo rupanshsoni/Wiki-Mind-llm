@@ -8,3 +8,6 @@ pub mod fs;
 pub mod project;
 pub mod search;
 pub mod vectorstore;
+pub mod youtube;
+pub mod github;
+

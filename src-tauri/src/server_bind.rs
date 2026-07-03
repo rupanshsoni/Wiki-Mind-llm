@@ -5,7 +5,7 @@ use tauri::{AppHandle, Manager};
 
 const DEFAULT_BIND_HOST: &str = "127.0.0.1";
 const PUBLIC_BIND_HOST: &str = "0.0.0.0";
-const BIND_HOST_ENV: &str = "LLM_WIKI_BIND_HOST";
+const BIND_HOST_ENV: &str = "WIKIMIND_BIND_HOST";
 
 pub fn configured_bind_host(app: &AppHandle) -> String {
     configured_env_bind_host()

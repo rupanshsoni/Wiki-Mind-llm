@@ -1066,7 +1066,7 @@ pub async fn write_file_atomic(path: String, contents: String) -> Result<(), Str
 /// is set. That flag is reserved for the `raw/sources` content area,
 /// where dotfolders like `.claude` / `.codex` are legitimate sources
 /// the user deliberately added. Every other caller keeps hiding dot
-/// entries so internal state (`.llm-wiki`, `.git`), caches, and secrets
+/// entries so internal state (`.wikimind`, `.git`), caches, and secrets
 /// (`.env`) never leak into trees or the ingest candidate set.
 fn entry_is_visible(name: &str, include_hidden: bool) -> bool {
     include_hidden || !name.starts_with('.')

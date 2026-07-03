@@ -2,15 +2,20 @@ use std::fs;
 use std::path::Path;
 
 use chrono::Local;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_opener::OpenerExt;
 
 use crate::panic_guard::run_guarded;
 use crate::types::wiki::WikiProject;
 
 #[tauri::command]
-pub fn create_project(name: String, path: String) -> Result<WikiProject, String> {
-    run_guarded("create_project", || create_project_impl(name, path))
+pub fn create_project(app: tauri::AppHandle, name: String, path: String) -> Result<WikiProject, String> {
+    run_guarded("create_project", || {
+        let project = create_project_impl(name, path)?;
+        let scheduler = app.state::<crate::maintenance::scheduler::MaintenanceScheduler>();
+        let _ = scheduler.open_project(project.path.clone());
+        Ok(project)
+    })
 }
 
 fn create_project_impl(name: String, path: String) -> Result<WikiProject, String> {
@@ -202,7 +207,7 @@ related: []
   "attachmentFolderPath": "raw/assets",
   "userIgnoreFilters": [
     ".cache",
-    ".llm-wiki",
+    ".wikimind",
     ".superpowers"
   ],
   "useMarkdownLinks": false,
@@ -242,7 +247,7 @@ related: []
 }
 
 #[tauri::command]
-pub fn open_project(path: String) -> Result<WikiProject, String> {
+pub fn open_project(app: tauri::AppHandle, path: String) -> Result<WikiProject, String> {
     run_guarded("open_project", || {
         let root = Path::new(&path);
 
@@ -255,10 +260,14 @@ pub fn open_project(path: String) -> Result<WikiProject, String> {
             .unwrap_or("Unknown")
             .to_string();
 
+        let resolved_path = path.replace('\\', "/");
+        let scheduler = app.state::<crate::maintenance::scheduler::MaintenanceScheduler>();
+        let _ = scheduler.open_project(resolved_path.clone());
+
         Ok(WikiProject {
             name,
             // Forward slashes for cross-platform consistency in the TS layer.
-            path: path.replace('\\', "/"),
+            path: resolved_path,
         })
     })
 }
