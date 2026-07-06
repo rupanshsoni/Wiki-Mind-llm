@@ -255,7 +255,7 @@ fn handle_request(
     if !is_authorized(app, query, headers) {
         return err(401, "Unauthorized");
     }
-    if !matches!(method, &Method::Get | &Method::Post | &Method::Patch) {
+    if !matches!(method, &Method::Get | &Method::Post | &Method::Patch | &Method::Delete) {
         return err(405, "Method not allowed");
     }
 
@@ -271,6 +271,30 @@ fn handle_request(
         (&Method::Get, ["projects", project_id, "files"]) => handle_files(app, project_id, query),
         (&Method::Get, ["projects", project_id, "files", "content"]) => {
             handle_file_content(app, project_id, query)
+        }
+        (&Method::Post, ["projects", project_id, "files"]) => {
+            handle_create_file(app, project_id, body)
+        }
+        (&Method::Delete, ["projects", project_id, "files"]) => {
+            handle_delete_file(app, project_id, body)
+        }
+        (&Method::Get, ["projects", project_id, "claims"]) => {
+            handle_list_claims(app, project_id, query)
+        }
+        (&Method::Get, ["projects", project_id, "contradictions"]) => {
+            handle_list_contradictions(app, project_id, query)
+        }
+        (&Method::Get, ["projects", project_id, "maintenance", "status"]) => {
+            handle_decay_status(app, project_id)
+        }
+        (&Method::Get, ["projects", project_id, "maintenance", "log"]) => {
+            handle_job_history(app, project_id)
+        }
+        (&Method::Post, ["projects", project_id, "ingest", "youtube"]) => {
+            handle_ingest_youtube(app, project_id, body)
+        }
+        (&Method::Post, ["projects", project_id, "ingest", "github"]) => {
+            handle_ingest_github(app, project_id, body)
         }
         (&Method::Get, ["projects", project_id, "reviews"]) => {
             handle_reviews(app, project_id, query)
@@ -458,7 +482,7 @@ fn is_token_authorized(app: &AppHandle, query: &str, headers: &[(String, String)
 }
 
 fn api_token(app: &AppHandle) -> Option<String> {
-    if let Ok(token) = std::env::var("LLM_WIKI_API_TOKEN") {
+    if let Ok(token) = std::env::var("WIKIMIND_API_TOKEN") {
         let trimmed = token.trim();
         if !trimmed.is_empty() {
             return Some(trimmed.to_string());
@@ -474,7 +498,7 @@ fn api_token(app: &AppHandle) -> Option<String> {
 }
 
 fn api_token_source(app: &AppHandle) -> &'static str {
-    if let Ok(token) = std::env::var("LLM_WIKI_API_TOKEN") {
+    if let Ok(token) = std::env::var("WIKIMIND_API_TOKEN") {
         if !token.trim().is_empty() {
             return "env";
         }
@@ -712,7 +736,7 @@ fn project_path_matches(stored_path: &str, candidate: &str) -> bool {
 }
 
 fn read_project_id(path: &str) -> Option<String> {
-    let raw = fs::read_to_string(Path::new(path).join(".llm-wiki/project.json")).ok()?;
+    let raw = fs::read_to_string(Path::new(path).join(".wikimind/project.json")).ok()?;
     let parsed: Value = serde_json::from_str(&raw).ok()?;
     parsed
         .get("id")
@@ -1132,7 +1156,7 @@ fn review_id_matches(item: &Value, requested_id: &str) -> bool {
 }
 
 fn load_review_items(project_path: &str, query: &ReviewQuery) -> Result<Vec<Value>, String> {
-    let path = Path::new(project_path).join(".llm-wiki/review.json");
+    let path = Path::new(project_path).join(".wikimind/review.json");
     let raw = match fs::read_to_string(&path) {
         Ok(raw) => raw,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
@@ -1488,7 +1512,7 @@ fn handle_bulk_resolve_reviews(app: &AppHandle, project_id: &str, body: &str) ->
     }
 }
 
-/// Set one review item's resolved state in `.llm-wiki/review.json`.
+/// Set one review item's resolved state in `.wikimind/review.json`.
 ///
 /// Operates on the RAW parsed array (not `load_review_items`, which
 /// sanitizes — reusing it would strip fields like `internalSecret` and
@@ -1501,7 +1525,7 @@ fn patch_review_item(
     resolved: bool,
     action: Option<&str>,
 ) -> Result<bool, String> {
-    let path = Path::new(project_path).join(".llm-wiki/review.json");
+    let path = Path::new(project_path).join(".wikimind/review.json");
     let mut parsed = match read_raw_review_array(&path)? {
         Some(parsed) => parsed,
         None => return Ok(false),
@@ -1541,7 +1565,7 @@ fn resolve_review_items(
     ids: &[String],
     action: Option<&str>,
 ) -> Result<(Vec<String>, Vec<String>), String> {
-    let path = Path::new(project_path).join(".llm-wiki/review.json");
+    let path = Path::new(project_path).join(".wikimind/review.json");
     let mut parsed = match read_raw_review_array(&path)? {
         Some(parsed) => parsed,
         // No review file → nothing exists, so every id is "not found".
@@ -1603,7 +1627,7 @@ fn apply_resolution(item: &mut Value, resolved: bool, action: Option<&str>) {
     }
 }
 
-/// Read `.llm-wiki/review.json` as a raw JSON value. Returns Ok(None)
+/// Read `.wikimind/review.json` as a raw JSON value. Returns Ok(None)
 /// when the file doesn't exist (callers treat that as "no items").
 fn read_raw_review_array(path: &Path) -> Result<Option<Value>, String> {
     let raw = match fs::read_to_string(path) {
@@ -1794,6 +1818,9 @@ struct AgentRuntimeConfig {
     llm: Option<agent::provider::LlmConfig>,
     web_search: Option<agent::tools::WebSearchConfig>,
     anytxt: Option<agent::tools::AnyTxtConfig>,
+    judge1: Option<agent::provider::LlmConfig>,
+    judge2: Option<agent::provider::LlmConfig>,
+    judge3: Option<agent::provider::LlmConfig>,
 }
 
 fn load_agent_runtime_config(app: &AppHandle) -> AgentRuntimeConfig {
@@ -1816,6 +1843,18 @@ fn load_agent_runtime_config(app: &AppHandle) -> AgentRuntimeConfig {
         anytxt: parsed
             .get("searchApiConfig")
             .and_then(|value| value.get("anyTxt"))
+            .cloned()
+            .and_then(|value| serde_json::from_value(value).ok()),
+        judge1: parsed
+            .get("judge1Config")
+            .cloned()
+            .and_then(|value| serde_json::from_value(value).ok()),
+        judge2: parsed
+            .get("judge2Config")
+            .cloned()
+            .and_then(|value| serde_json::from_value(value).ok()),
+        judge3: parsed
+            .get("judge3Config")
             .cloned()
             .and_then(|value| serde_json::from_value(value).ok()),
     }
@@ -2004,6 +2043,179 @@ fn handle_rescan(app: &AppHandle, project_id: &str) -> ApiResponse {
     }
 }
 
+fn handle_create_file(app: &AppHandle, project_id: &str, body: &str) -> ApiResponse {
+    let project = match resolve_project(app, project_id) {
+        Ok(project) => project,
+        Err(e) => return err(404, e),
+    };
+    let payload: serde_json::Value = match serde_json::from_str(body) {
+        Ok(val) => val,
+        Err(e) => return err(400, format!("Invalid JSON: {e}")),
+    };
+    let path = match payload.get("path").and_then(|v| v.as_str()) {
+        Some(p) => p,
+        None => return err(400, "Missing 'path' parameter"),
+    };
+    let content = match payload.get("content").and_then(|v| v.as_str()) {
+        Some(c) => c,
+        None => return err(400, "Missing 'content' parameter"),
+    };
+    let overwrite = payload.get("overwrite").and_then(|v| v.as_bool()).unwrap_or(false);
+
+    if !is_public_project_rel(path) {
+        return err(403, format!("Access denied to path: {path}"));
+    }
+
+    let absolute_path = match safe_join(&project.path, path) {
+        Ok(p) => p,
+        Err(e) => return err(400, e),
+    };
+
+    if absolute_path.exists() && !overwrite {
+        return err(409, "File already exists. Set overwrite: true to replace.");
+    }
+
+    if let Some(parent) = absolute_path.parent() {
+        if let Err(e) = std::fs::create_dir_all(parent) {
+            return err(500, format!("Failed to create parent directories: {e}"));
+        }
+    }
+
+    if let Err(e) = std::fs::write(&absolute_path, content) {
+        return err(500, format!("Failed to write file: {e}"));
+    }
+
+    ok(json!({ "ok": true, "path": path }))
+}
+
+fn handle_delete_file(app: &AppHandle, project_id: &str, body: &str) -> ApiResponse {
+    let project = match resolve_project(app, project_id) {
+        Ok(project) => project,
+        Err(e) => return err(404, e),
+    };
+    let payload: serde_json::Value = match serde_json::from_str(body) {
+        Ok(val) => val,
+        Err(e) => return err(400, format!("Invalid JSON: {e}")),
+    };
+    let path = match payload.get("path").and_then(|v| v.as_str()) {
+        Some(p) => p,
+        None => return err(400, "Missing 'path' parameter"),
+    };
+
+    if !is_public_project_rel(path) {
+        return err(403, format!("Access denied to path: {path}"));
+    }
+
+    let absolute_path = match safe_join(&project.path, path) {
+        Ok(p) => p,
+        Err(e) => return err(400, e),
+    };
+
+    if !absolute_path.exists() {
+        return err(404, "File not found");
+    }
+
+    if let Err(e) = std::fs::remove_file(&absolute_path) {
+        return err(500, format!("Failed to delete file: {e}"));
+    }
+
+    ok(json!({ "ok": true }))
+}
+
+fn handle_list_claims(app: &AppHandle, project_id: &str, query: &str) -> ApiResponse {
+    let project = match resolve_project(app, project_id) {
+        Ok(project) => project,
+        Err(e) => return err(404, e),
+    };
+    let params = parse_query(query);
+    let state_filter = params.get("state").cloned();
+    match crate::maintenance::maintenance_list_claims(project.path.clone(), state_filter) {
+        Ok(claims) => ok(json!({ "claims": claims })),
+        Err(e) => err(500, e),
+    }
+}
+
+fn handle_list_contradictions(app: &AppHandle, project_id: &str, query: &str) -> ApiResponse {
+    let project = match resolve_project(app, project_id) {
+        Ok(project) => project,
+        Err(e) => return err(404, e),
+    };
+    let params = parse_query(query);
+    let status_filter = params.get("status").cloned();
+    match crate::maintenance::maintenance_list_contradictions(project.path.clone(), status_filter) {
+        Ok(contradictions) => ok(json!({ "contradictions": contradictions })),
+        Err(e) => err(500, e),
+    }
+}
+
+fn handle_decay_status(app: &AppHandle, project_id: &str) -> ApiResponse {
+    let project = match resolve_project(app, project_id) {
+        Ok(project) => project,
+        Err(e) => return err(404, e),
+    };
+    match crate::maintenance::maintenance_decay_status(project.path.clone()) {
+        Ok(status) => ok(serde_json::to_value(status).unwrap()),
+        Err(e) => err(500, e),
+    }
+}
+
+fn handle_job_history(app: &AppHandle, project_id: &str) -> ApiResponse {
+    let project = match resolve_project(app, project_id) {
+        Ok(project) => project,
+        Err(e) => return err(404, e),
+    };
+    match crate::maintenance::maintenance_job_history(project.path.clone()) {
+        Ok(history) => ok(json!({ "log": history })),
+        Err(e) => err(500, e),
+    }
+}
+
+fn handle_ingest_youtube(app: &AppHandle, project_id: &str, body: &str) -> ApiResponse {
+    let project = match resolve_project(app, project_id) {
+        Ok(project) => project,
+        Err(e) => return err(404, e),
+    };
+    let payload: serde_json::Value = match serde_json::from_str(body) {
+        Ok(val) => val,
+        Err(e) => return err(400, format!("Invalid JSON: {e}")),
+    };
+    let url = match payload.get("url").and_then(|v| v.as_str()) {
+        Some(u) => u,
+        None => return err(400, "Missing 'url' parameter"),
+    };
+
+    match tauri::async_runtime::block_on(crate::commands::youtube::ingest_youtube_url(
+        project.path.clone(),
+        url.to_string(),
+    )) {
+        Ok(result) => ok(json!({ "ok": true, "path": result })),
+        Err(e) => err(500, e),
+    }
+}
+
+fn handle_ingest_github(app: &AppHandle, project_id: &str, body: &str) -> ApiResponse {
+    let project = match resolve_project(app, project_id) {
+        Ok(project) => project,
+        Err(e) => return err(404, e),
+    };
+    let payload: serde_json::Value = match serde_json::from_str(body) {
+        Ok(val) => val,
+        Err(e) => return err(400, format!("Invalid JSON: {e}")),
+    };
+    let url = match payload.get("url").and_then(|v| v.as_str()) {
+        Some(u) => u,
+        None => return err(400, "Missing 'url' parameter"),
+    };
+
+    match tauri::async_runtime::block_on(crate::commands::github::ingest_github_url(
+        project.path.clone(),
+        url.to_string(),
+    )) {
+        Ok(result) => ok(json!({ "ok": true, "path": result })),
+        Err(e) => err(500, e),
+    }
+}
+
 fn load_source_watch_config(
     app: &AppHandle,
     project_id: &str,
@@ -2096,14 +2308,14 @@ mod tests {
         assert!(is_public_project_rel("Wiki/index.md"));
         assert!(is_public_project_rel("raw/sources/source.md"));
         assert!(is_public_project_rel("Raw/Sources/source.md"));
-        assert!(!is_public_project_rel(".llm-wiki/file-change-queue.json"));
+        assert!(!is_public_project_rel(".wikimind/file-change-queue.json"));
         assert!(!is_public_project_rel("wiki/.draft.md"));
     }
 
     #[test]
     fn review_query_defaults_to_unresolved_items() {
         let root = test_project_dir();
-        let state_dir = root.join(".llm-wiki");
+        let state_dir = root.join(".wikimind");
         fs::create_dir_all(&state_dir).unwrap();
         fs::write(
             state_dir.join("review.json"),
@@ -2185,7 +2397,7 @@ mod tests {
     #[test]
     fn review_query_filters_by_type_status_and_limit() {
         let root = test_project_dir();
-        let state_dir = root.join(".llm-wiki");
+        let state_dir = root.join(".wikimind");
         fs::create_dir_all(&state_dir).unwrap();
         fs::write(
             state_dir.join("review.json"),
@@ -2220,7 +2432,7 @@ mod tests {
     #[test]
     fn review_query_collapses_legacy_duplicate_ids_to_stable_id() {
         let root = test_project_dir();
-        let state_dir = root.join(".llm-wiki");
+        let state_dir = root.join(".wikimind");
         fs::create_dir_all(&state_dir).unwrap();
         fs::write(
             state_dir.join("review.json"),
@@ -2282,7 +2494,7 @@ mod tests {
     #[test]
     fn review_query_filters_status_after_stable_id_merge() {
         let root = test_project_dir();
-        let state_dir = root.join(".llm-wiki");
+        let state_dir = root.join(".wikimind");
         fs::create_dir_all(&state_dir).unwrap();
         fs::write(
             state_dir.join("review.json"),
@@ -2322,13 +2534,13 @@ mod tests {
     }
 
     fn write_reviews(root: &Path, value: Value) {
-        let state_dir = root.join(".llm-wiki");
+        let state_dir = root.join(".wikimind");
         fs::create_dir_all(&state_dir).unwrap();
         fs::write(state_dir.join("review.json"), value.to_string()).unwrap();
     }
 
     fn read_reviews(root: &Path) -> Value {
-        let raw = fs::read_to_string(root.join(".llm-wiki/review.json")).unwrap();
+        let raw = fs::read_to_string(root.join(".wikimind/review.json")).unwrap();
         serde_json::from_str(&raw).unwrap()
     }
 
