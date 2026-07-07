@@ -64,7 +64,7 @@ fn build_system_context(
     skill_mode: AgentSkillMode,
 ) -> String {
     let mut out = [
-        "You are the LLM Wiki backend Agent.",
+        "You are the WikiMind backend Agent.",
         "Answer using the current project context, available tools, and cited references.",
         "If evidence is insufficient, say what is missing instead of inventing facts.",
         "When using references, mention the relevant page paths naturally.",
@@ -94,7 +94,7 @@ fn build_system_context(
     out.push_str("- Do not create generated files in the user's home folder, Desktop, Downloads, system temp folders, hidden app metadata folders, or skill installation folders.\n");
     out.push_str("- Treat skill folders as read-only instruction/reference sources. If a skill or script needs output files, pass or choose a path under the Agent workspace above.\n");
     out.push_str("- If the requested visual can be represented as a Mermaid diagram, reply with a ```mermaid fenced code block directly instead of generating an HTML file just to display that diagram.\n");
-    out.push_str("- When using shell.exec, prefer relative output paths because the shell runs from the Agent workspace; use the LLM_WIKI_AGENT_WORKSPACE environment variable when an absolute output path is required.\n");
+    out.push_str("- When using shell.exec, prefer relative output paths because the shell runs from the Agent workspace; use the WIKIMIND_AGENT_WORKSPACE environment variable when an absolute output path is required.\n");
 
     if let Some(overview) = project.overview.as_deref().filter(|v| !v.trim().is_empty()) {
         out.push_str("\n\nProject overview:\n");
@@ -311,8 +311,8 @@ mod tests {
             name: "article-illustrator".to_string(),
             description: "Create article images".to_string(),
             instructions: "Use the local illustration helper when needed.".to_string(),
-            base_dir: "/tmp/project/.llm-wiki/skills/article-illustrator".to_string(),
-            location: "/tmp/project/.llm-wiki/skills/article-illustrator/SKILL.md".to_string(),
+            base_dir: "/tmp/project/.wikimind/skills/article-illustrator".to_string(),
+            location: "/tmp/project/.wikimind/skills/article-illustrator/SKILL.md".to_string(),
         }];
 
         let auto = build_agent_context(AgentContextInput {
@@ -339,7 +339,7 @@ mod tests {
         assert!(auto.system.contains("<available_skills>"));
         assert!(auto.system.contains("<name>article-illustrator</name>"));
         assert!(auto.system.contains(
-            "<location>/tmp/project/.llm-wiki/skills/article-illustrator/SKILL.md</location>"
+            "<location>/tmp/project/.wikimind/skills/article-illustrator/SKILL.md</location>"
         ));
         assert!(!auto.system.contains("Use the local illustration helper"));
         assert!(explicit.system.contains("Selected skills"));
@@ -347,7 +347,7 @@ mod tests {
         assert!(explicit.system.contains("article-illustrator"));
         assert!(explicit
             .system
-            .contains("location=\"/tmp/project/.llm-wiki/skills/article-illustrator/SKILL.md\""));
+            .contains("location=\"/tmp/project/.wikimind/skills/article-illustrator/SKILL.md\""));
         assert!(explicit
             .system
             .contains("Use the local illustration helper"));

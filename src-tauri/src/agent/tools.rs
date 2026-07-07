@@ -389,7 +389,7 @@ pub fn builtin_tool_specs() -> Vec<ToolSpec> {
     vec![
         ToolSpec {
             name: "wiki.search".to_string(),
-            description: "Search generated LLM Wiki pages using backend keyword/vector retrieval."
+            description: "Search generated WikiMind pages using backend keyword/vector retrieval."
                 .to_string(),
             effects: vec![ToolEffect::Read],
             parameters: Some(serde_json::json!({
@@ -514,7 +514,7 @@ pub fn builtin_tool_specs() -> Vec<ToolSpec> {
         },
         ToolSpec {
             name: "skills.load".to_string(),
-            description: "Load instruction-only project skills from .llm-wiki/skills.".to_string(),
+            description: "Load instruction-only project skills from .wikimind/skills.".to_string(),
             effects: vec![ToolEffect::Read],
             parameters: None,
         },
@@ -966,7 +966,7 @@ fn apply_sanitized_shell_env(command: &mut Command, project_path: &str, workspac
     // This is environment minimization, not an OS sandbox. `shell.exec` is only
     // reachable after an exact user approval in the Agent runtime, and approved
     // commands can still access the user's normal filesystem through the shell.
-    // Keep generated artifacts in `LLM_WIKI_AGENT_WORKSPACE`, but do not imply
+    // Keep generated artifacts in `WIKIMIND_AGENT_WORKSPACE`, but do not imply
     // stronger process isolation here without adding a real sandbox layer.
     command.env_clear();
     preserve_shell_env(command, &["PATH", "LANG", "LC_ALL", "LC_CTYPE"]);
@@ -1007,9 +1007,9 @@ fn apply_sanitized_shell_env(command: &mut Command, project_path: &str, workspac
             ],
         );
     }
-    command.env("LLM_WIKI_PROJECT", project_path);
-    command.env("LLM_WIKI_PROJECT_PATH", project_path);
-    command.env("LLM_WIKI_AGENT_WORKSPACE", workspace);
+    command.env("WIKIMIND_PROJECT", project_path);
+    command.env("WIKIMIND_PROJECT_PATH", project_path);
+    command.env("WIKIMIND_AGENT_WORKSPACE", workspace);
 }
 
 fn preserve_shell_env(command: &mut Command, keys: &[&str]) {
@@ -2432,19 +2432,19 @@ mod tests {
     async fn shell_exec_sanitizes_environment() {
         let root = std::env::temp_dir().join(format!("llm-wiki-shell-env-{}", Uuid::new_v4()));
         fs::create_dir_all(&root).unwrap();
-        std::env::set_var("LLM_WIKI_SECRET_TEST_SENTINEL", "must-not-leak");
+        std::env::set_var("WIKIMIND_SECRET_TEST_SENTINEL", "must-not-leak");
         let output = run_shell_exec(root.to_str().unwrap(), "env", 5)
             .await
             .unwrap();
-        std::env::remove_var("LLM_WIKI_SECRET_TEST_SENTINEL");
+        std::env::remove_var("WIKIMIND_SECRET_TEST_SENTINEL");
         assert!(output
             .stdout
-            .contains(&format!("LLM_WIKI_PROJECT={}", root.to_string_lossy())));
+            .contains(&format!("WIKIMIND_PROJECT={}", root.to_string_lossy())));
         assert!(output.stdout.contains(&format!(
-            "LLM_WIKI_AGENT_WORKSPACE={}",
+            "WIKIMIND_AGENT_WORKSPACE={}",
             root.join(AGENT_WORKSPACE_DIR).to_string_lossy()
         )));
-        assert!(!output.stdout.contains("LLM_WIKI_SECRET_TEST_SENTINEL="));
+        assert!(!output.stdout.contains("WIKIMIND_SECRET_TEST_SENTINEL="));
         let _ = fs::remove_dir_all(root);
     }
 

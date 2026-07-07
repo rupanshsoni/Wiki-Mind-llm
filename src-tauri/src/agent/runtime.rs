@@ -398,6 +398,7 @@ impl AgentRuntime {
                     .map_err(|err| format!("Invalid wiki.write_page result: {err}"))
             }) {
                 Ok(reference) => {
+                    self.trigger_post_ingest_hook(&reference.path);
                     emit_event(
                         &mut events,
                         &event_sink,
@@ -2118,6 +2119,7 @@ impl AgentRuntime {
                 let reference: AgentReference = serde_json::from_value(value)
                     .map_err(|err| format!("Invalid wiki.write_page result: {err}"))?;
                 let path = reference.path.clone();
+                self.trigger_post_ingest_hook(&path);
                 push_unique_reference(references, events, event_sink, reference);
                 Ok(format!("wrote {path}"))
             }
@@ -2196,6 +2198,48 @@ impl AgentRuntime {
                 ) + &generated_summary)
             }
             _ => Ok(value.to_string()),
+        }
+    }
+
+    fn trigger_post_ingest_hook(&self, path: &str) {
+        let lower_path = path.to_ascii_lowercase();
+        if (lower_path.starts_with("wiki/concepts/") || lower_path.starts_with("wiki/entities/"))
+            && lower_path.ends_with(".md")
+        {
+            let project_path = self.project_path.clone();
+            let page_path = path.to_string();
+            let llm_cfg = self.llm_config.clone();
+            let embed_cfg = self.embedding_config.clone();
+
+            tokio::spawn(async move {
+                let Some(llm_config) = llm_cfg else {
+                    eprintln!("[IngestHook] No LLM config to run claim extraction for {}", page_path);
+                    return;
+                };
+                let provider = match LlmClient::new(llm_config) {
+                    Ok(p) => p,
+                    Err(err) => {
+                        eprintln!("[IngestHook] Failed to instantiate LLM provider: {}", err);
+                        return;
+                    }
+                };
+                println!("[IngestHook] Running claim extraction for {}", page_path);
+                match crate::maintenance::extract::extract_claims(
+                    &project_path,
+                    &page_path,
+                    &provider,
+                    embed_cfg.as_ref(),
+                )
+                .await
+                {
+                    Ok(claims) => {
+                        println!("[IngestHook] Claim extraction succeeded for {}: {} claims processed", page_path, claims.len());
+                    }
+                    Err(err) => {
+                        eprintln!("[IngestHook] Claim extraction failed for {}: {}", page_path, err);
+                    }
+                }
+            });
         }
     }
 
@@ -3567,12 +3611,12 @@ where
 fn build_retrieval_answer(query: &str, references: &[AgentReference]) -> String {
     if references.is_empty() {
         return format!(
-            "I searched the current LLM Wiki project for \"{query}\" but did not find matching wiki pages."
+            "I searched the current WikiMind project for \"{query}\" but did not find matching wiki pages."
         );
     }
 
     let mut out = format!(
-        "I searched the current LLM Wiki project for \"{query}\" and found {} relevant page(s):",
+        "I searched the current WikiMind project for \"{query}\" and found {} relevant page(s):",
         references.len()
     );
     for (idx, reference) in references.iter().take(MAX_CHAT_SEARCH_RESULTS).enumerate() {
@@ -3663,10 +3707,10 @@ mod tests {
     #[tokio::test]
     async fn planner_unavailable_skill_turn_does_not_fall_back_to_wiki_search() {
         let project = temp_project("skill-no-fallback");
-        fs::create_dir_all(project.join(".llm-wiki").join("skills").join("demo")).unwrap();
+        fs::create_dir_all(project.join(".wikimind").join("skills").join("demo")).unwrap();
         fs::write(
             project
-                .join(".llm-wiki")
+                .join(".wikimind")
                 .join("skills")
                 .join("demo")
                 .join("SKILL.md"),
@@ -4082,13 +4126,13 @@ mod tests {
     #[test]
     fn parses_model_tool_plan_from_wrapped_json() {
         let plan = parse_model_tool_plan(
-            "```json\n{\"toolCalls\":[{\"tool\":\"web.search\",\"query\":\"llm wiki release\"}]}\n```",
+            "```json\n{\"toolCalls\":[{\"tool\":\"web.search\",\"query\":\"wikimind release\"}]}\n```",
         )
         .unwrap();
         let queries = planned_tool_queries(&plan, "fallback");
         assert_eq!(
             queries.get("web.search").map(String::as_str),
-            Some("llm wiki release")
+            Some("wikimind release")
         );
     }
 

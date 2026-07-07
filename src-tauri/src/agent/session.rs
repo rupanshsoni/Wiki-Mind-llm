@@ -103,7 +103,7 @@ impl AgentSessionStore {
 
     pub fn list_sessions(&self, project_path: &str) -> Vec<AgentSession> {
         let dir = Path::new(project_path)
-            .join(".llm-wiki")
+            .join(".wikimind")
             .join("agent-sessions");
         let Ok(entries) = fs::read_dir(dir) else {
             return Vec::new();
@@ -178,7 +178,7 @@ fn session_file(project_path: &str, session_id: &str) -> Option<PathBuf> {
     let id = sanitize_session_id(session_id)?;
     Some(
         Path::new(project_path)
-            .join(".llm-wiki")
+            .join(".wikimind")
             .join("agent-sessions")
             .join(format!("{id}.json")),
     )
@@ -257,7 +257,7 @@ mod tests {
         assert_eq!(messages.len(), 2);
         assert_eq!(messages[0].content, "hello");
         assert!(project
-            .join(".llm-wiki")
+            .join(".wikimind")
             .join("agent-sessions")
             .join("s.persist.json")
             .exists());
