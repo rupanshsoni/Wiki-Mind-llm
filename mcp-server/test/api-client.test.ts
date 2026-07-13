@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { LlmWikiApiClient, normalizeBaseUrl } from "../src/api-client.js"
+import { WikiMindApiClient, normalizeBaseUrl } from "../src/api-client.js"
 
 test("normalizeBaseUrl trims trailing slashes and falls back to localhost", () => {
   assert.equal(normalizeBaseUrl("http://127.0.0.1:19828///"), "http://127.0.0.1:19828")
@@ -18,7 +18,7 @@ test("projects sends bearer token and parses current project", async () => {
     }), { status: 200 })
   }
 
-  const client = new LlmWikiApiClient({
+  const client = new WikiMindApiClient({
     baseUrl: "http://localhost:19828/",
     token: "secret",
     fetchImpl,
@@ -38,7 +38,7 @@ test("health does not send authorization", async () => {
     return new Response(JSON.stringify({ ok: true, status: "running" }), { status: 200 })
   }
 
-  const client = new LlmWikiApiClient({ token: "secret", fetchImpl })
+  const client = new WikiMindApiClient({ token: "secret", fetchImpl })
   await client.health()
 
   assert.equal((calls[0]?.headers as Record<string, string> | undefined)?.Authorization, undefined)
@@ -57,7 +57,7 @@ test("search posts JSON body to current project", async () => {
     }), { status: 200 })
   }
 
-  const client = new LlmWikiApiClient({ fetchImpl })
+  const client = new WikiMindApiClient({ fetchImpl })
   const results = await client.search("current", "query", { topK: 3, includeContent: true })
 
   assert.deepEqual(JSON.parse(body), { query: "query", topK: 3, includeContent: true })
@@ -86,7 +86,7 @@ test("chat posts agent request and parses references", async () => {
     }), { status: 200 })
   }
 
-  const client = new LlmWikiApiClient({ baseUrl: "http://localhost:19828", fetchImpl })
+  const client = new WikiMindApiClient({ baseUrl: "http://localhost:19828", fetchImpl })
   const response = await client.chat("current", "question", {
     sessionId: "s1",
     mode: "standard",
@@ -129,7 +129,7 @@ test("cancelChat posts to the chat cancellation endpoint", async () => {
     }), { status: 200 })
   }
 
-  const client = new LlmWikiApiClient({ baseUrl: "http://localhost:19828", fetchImpl })
+  const client = new WikiMindApiClient({ baseUrl: "http://localhost:19828", fetchImpl })
   const response = await client.cancelChat("current", "s1")
 
   assert.equal(url, "http://localhost:19828/api/v1/projects/current/chat/s1/cancel")
@@ -146,7 +146,7 @@ test("graph parses nodeType from API graph nodes", async () => {
     }), { status: 200 })
   )
 
-  const client = new LlmWikiApiClient({ fetchImpl })
+  const client = new WikiMindApiClient({ fetchImpl })
   const graph = await client.graph("current")
 
   assert.equal(graph.nodes[0]?.type, "concept")
@@ -163,7 +163,7 @@ test("files exposes truncated flag", async () => {
     }), { status: 200 })
   )
 
-  const client = new LlmWikiApiClient({ fetchImpl })
+  const client = new WikiMindApiClient({ fetchImpl })
   const files = await client.files("current")
 
   assert.equal(files.truncated, true)
@@ -191,7 +191,7 @@ test("reviews requests unresolved review items with filters", async () => {
     }), { status: 200 })
   }
 
-  const client = new LlmWikiApiClient({ baseUrl: "http://localhost:19828", fetchImpl })
+  const client = new WikiMindApiClient({ baseUrl: "http://localhost:19828", fetchImpl })
   const result = await client.reviews("current", {
     status: "unresolved",
     type: "missing-page",
@@ -210,7 +210,7 @@ test("network failures include desktop app hint", async () => {
     throw new Error("ECONNREFUSED")
   }
 
-  const client = new LlmWikiApiClient({ fetchImpl })
+  const client = new WikiMindApiClient({ fetchImpl })
   await assert.rejects(() => client.projects(), /Is the desktop app running\? ECONNREFUSED/)
 })
 
@@ -219,7 +219,7 @@ test("non-JSON responses include status and body preview", async () => {
     new Response("not json", { status: 502, statusText: "Bad Gateway" })
   )
 
-  const client = new LlmWikiApiClient({ fetchImpl })
+  const client = new WikiMindApiClient({ fetchImpl })
   await assert.rejects(() => client.projects(), /non-JSON response \(502\): not json/)
 })
 
@@ -228,6 +228,77 @@ test("API errors include status and server message", async () => {
     new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), { status: 401 })
   )
 
-  const client = new LlmWikiApiClient({ fetchImpl })
-  await assert.rejects(() => client.projects(), /LLM Wiki API 401: Unauthorized/)
+  const client = new WikiMindApiClient({ fetchImpl })
+  await assert.rejects(() => client.projects(), /WikiMind API 401: Unauthorized/)
 })
+
+test("createFile sends POST payload and parses response", async () => {
+  let body = ""
+  let url = ""
+  const fetchImpl = async (requestUrl: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    url = String(requestUrl)
+    body = String(init?.body ?? "")
+    return new Response(JSON.stringify({ ok: true, path: "wiki/concepts/attention.md" }), { status: 200 })
+  }
+
+  const client = new WikiMindApiClient({ fetchImpl })
+  const result = await client.createFile("current", "wiki/concepts/attention.md", "hello", true)
+
+  assert.equal(url, "http://127.0.0.1:19828/api/v1/projects/current/files")
+  assert.deepEqual(JSON.parse(body), { path: "wiki/concepts/attention.md", content: "hello", overwrite: true })
+  assert.equal(result.ok, true)
+  assert.equal(result.path, "wiki/concepts/attention.md")
+})
+
+test("deleteFile sends DELETE payload and parses response", async () => {
+  let body = ""
+  let url = ""
+  let method = ""
+  const fetchImpl = async (requestUrl: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    url = String(requestUrl)
+    body = String(init?.body ?? "")
+    method = init?.method ?? ""
+    return new Response(JSON.stringify({ ok: true }), { status: 200 })
+  }
+
+  const client = new WikiMindApiClient({ fetchImpl })
+  const result = await client.deleteFile("current", "wiki/concepts/attention.md")
+
+  assert.equal(url, "http://127.0.0.1:19828/api/v1/projects/current/files")
+  assert.equal(method, "DELETE")
+  assert.deepEqual(JSON.parse(body), { path: "wiki/concepts/attention.md" })
+  assert.equal(result.ok, true)
+})
+
+test("claims parses list of claims", async () => {
+  let url = ""
+  const fetchImpl = async (requestUrl: string | URL | Request): Promise<Response> => {
+    url = String(requestUrl)
+    return new Response(JSON.stringify({ claims: [{ title: "claim1", confidence: 0.8 }] }), { status: 200 })
+  }
+
+  const client = new WikiMindApiClient({ fetchImpl })
+  const result = await client.claims("current", "fresh")
+
+  assert.equal(url, "http://127.0.0.1:19828/api/v1/projects/current/claims?state=fresh")
+  assert.equal(result[0].title, "claim1")
+})
+
+test("ingestYoutube sends POST payload and parses response", async () => {
+  let body = ""
+  let url = ""
+  const fetchImpl = async (requestUrl: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    url = String(requestUrl)
+    body = String(init?.body ?? "")
+    return new Response(JSON.stringify({ ok: true, path: "raw/sources/youtube_123.md" }), { status: 200 })
+  }
+
+  const client = new WikiMindApiClient({ fetchImpl })
+  const result = await client.ingestYoutube("current", "https://youtube.com/watch?v=123")
+
+  assert.equal(url, "http://127.0.0.1:19828/api/v1/projects/current/ingest/youtube")
+  assert.deepEqual(JSON.parse(body), { url: "https://youtube.com/watch?v=123" })
+  assert.equal(result.ok, true)
+  assert.equal(result.path, "raw/sources/youtube_123.md")
+})
+

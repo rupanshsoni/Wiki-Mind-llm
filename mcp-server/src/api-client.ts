@@ -1,6 +1,6 @@
 export const DEFAULT_API_BASE_URL = "http://127.0.0.1:19828"
 
-export interface LlmWikiApiClientOptions {
+export interface WikiMindApiClientOptions {
   baseUrl?: string
   token?: string
   fetchImpl?: typeof fetch
@@ -157,14 +157,14 @@ function numberOrUndefined(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined
 }
 
-export class LlmWikiApiClient {
+export class WikiMindApiClient {
   private readonly baseUrl: string
   private readonly token?: string
   private readonly fetchImpl: typeof fetch
 
-  constructor(options: LlmWikiApiClientOptions = {}) {
-    this.baseUrl = normalizeBaseUrl(options.baseUrl ?? process.env.LLM_WIKI_API_BASE_URL)
-    this.token = options.token ?? process.env.LLM_WIKI_API_TOKEN
+  constructor(options: WikiMindApiClientOptions = {}) {
+    this.baseUrl = normalizeBaseUrl(options.baseUrl ?? process.env.WIKIMIND_API_BASE_URL)
+    this.token = options.token ?? process.env.WIKIMIND_API_TOKEN
     this.fetchImpl = options.fetchImpl ?? fetch
   }
 
@@ -296,7 +296,75 @@ export class LlmWikiApiClient {
     })
   }
 
-  private async request(path: string, options: { method?: "GET" | "POST"; body?: unknown; auth?: boolean } = {}): Promise<Record<string, unknown>> {
+  async createFile(projectId = "current", path: string, content: string, overwrite = false): Promise<{ ok: boolean; path: string }> {
+    const json = await this.request(`/projects/${encodeURIComponent(projectId)}/files`, {
+      method: "POST",
+      body: { path, content, overwrite },
+    })
+    return {
+      ok: json.ok === true,
+      path: typeof json.path === "string" ? json.path : path,
+    }
+  }
+
+  async deleteFile(projectId = "current", path: string): Promise<{ ok: boolean }> {
+    const json = await this.request(`/projects/${encodeURIComponent(projectId)}/files`, {
+      method: "DELETE",
+      body: { path },
+    })
+    return {
+      ok: json.ok === true,
+    }
+  }
+
+  async claims(projectId = "current", state?: string): Promise<any[]> {
+    const params = new URLSearchParams()
+    if (state) params.set("state", state)
+    const suffix = params.toString() ? `?${params.toString()}` : ""
+    const json = await this.request(`/projects/${encodeURIComponent(projectId)}/claims${suffix}`)
+    return Array.isArray(json.claims) ? json.claims : []
+  }
+
+  async contradictions(projectId = "current", status?: string): Promise<any[]> {
+    const params = new URLSearchParams()
+    if (status) params.set("status", status)
+    const suffix = params.toString() ? `?${params.toString()}` : ""
+    const json = await this.request(`/projects/${encodeURIComponent(projectId)}/contradictions${suffix}`)
+    return Array.isArray(json.contradictions) ? json.contradictions : []
+  }
+
+  async decayStatus(projectId = "current"): Promise<Record<string, unknown>> {
+    return this.request(`/projects/${encodeURIComponent(projectId)}/maintenance/status`)
+  }
+
+  async maintenanceLog(projectId = "current"): Promise<any[]> {
+    const json = await this.request(`/projects/${encodeURIComponent(projectId)}/maintenance/log`)
+    return Array.isArray(json.log) ? json.log : []
+  }
+
+  async ingestYoutube(projectId = "current", url: string): Promise<{ ok: boolean; path: string }> {
+    const json = await this.request(`/projects/${encodeURIComponent(projectId)}/ingest/youtube`, {
+      method: "POST",
+      body: { url },
+    })
+    return {
+      ok: json.ok === true,
+      path: typeof json.path === "string" ? json.path : "",
+    }
+  }
+
+  async ingestGithub(projectId = "current", url: string): Promise<{ ok: boolean; path: string }> {
+    const json = await this.request(`/projects/${encodeURIComponent(projectId)}/ingest/github`, {
+      method: "POST",
+      body: { url },
+    })
+    return {
+      ok: json.ok === true,
+      path: typeof json.path === "string" ? json.path : "",
+    }
+  }
+
+  private async request(path: string, options: { method?: "GET" | "POST" | "DELETE"; body?: unknown; auth?: boolean } = {}): Promise<Record<string, unknown>> {
     const url = `${this.baseUrl}${apiPath(path)}`
     const headers: Record<string, string> = { Accept: "application/json" }
     if (options.auth !== false && this.token?.trim()) {
@@ -312,20 +380,20 @@ export class LlmWikiApiClient {
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
       })
     } catch (err) {
-      throw new Error(`LLM Wiki API request failed. Is the desktop app running? ${err instanceof Error ? err.message : String(err)}`)
+      throw new Error(`WikiMind API request failed. Is the desktop app running? ${err instanceof Error ? err.message : String(err)}`)
     }
 
     const text = await response.text()
     let json: Record<string, unknown>
     try {
-      json = text ? requireObject(JSON.parse(text), "LLM Wiki API response") : {}
+      json = text ? requireObject(JSON.parse(text), "WikiMind API response") : {}
     } catch (err) {
-      throw new Error(`LLM Wiki API returned non-JSON response (${response.status}): ${text.slice(0, 300)}${err instanceof Error ? ` (${err.message})` : ""}`)
+      throw new Error(`WikiMind API returned non-JSON response (${response.status}): ${text.slice(0, 300)}${err instanceof Error ? ` (${err.message})` : ""}`)
     }
 
     if (!response.ok || json.ok === false) {
       const message = typeof json.error === "string" ? json.error : response.statusText
-      throw new Error(`LLM Wiki API ${response.status}: ${message}`)
+      throw new Error(`WikiMind API ${response.status}: ${message}`)
     }
     return json
   }
