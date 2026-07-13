@@ -35,7 +35,7 @@ interface LlmConfig {
   apiMode?: CustomApiMode
   reasoning?: ReasoningConfig
   /**
-   * Local CLI providers only. When true, LLM Wiki asks Claude/Codex CLI
+   * Local CLI providers only. When true, WikiMind asks Claude/Codex CLI
    * to ignore user-level rules/config/MCP/tool state where the CLI exposes
    * such controls. Default false preserves existing advanced-user setups.
    */
@@ -204,7 +204,7 @@ interface ScheduledImportConfig {
  *     expose scripts while keeping MCP disabled.
  *   - `token` is the bearer secret. Empty + auth required =
  *     every non-/health request returns 401. The env var
- *     `LLM_WIKI_API_TOKEN` overrides this field at the backend.
+ *     `WIKIMIND_API_TOKEN` overrides this field at the backend.
  */
 interface ApiConfig {
   enabled: boolean
@@ -365,8 +365,11 @@ interface WikiState {
    * one wiki-relative) still works.
    */
   pendingScrollImageSrc: string | null
-  activeView: "chat" | "wiki" | "sources" | "search" | "graph" | "lint" | "review" | "skills" | "settings"
+  activeView: "chat" | "wiki" | "sources" | "search" | "graph" | "lint" | "review" | "skills" | "settings" | "maintenance"
   llmConfig: LlmConfig
+  judge1Config: LlmConfig
+  judge2Config: LlmConfig
+  judge3Config: LlmConfig
   /** Per-provider-preset stored overrides (API key, model, endpoint, …). */
   providerConfigs: ProviderConfigs
   /** Which preset is currently active. `null` = no LLM configured. */
@@ -395,6 +398,9 @@ interface WikiState {
   setPendingScrollImageSrc: (src: string | null) => void
   setActiveView: (view: WikiState["activeView"]) => void
   setLlmConfig: (config: LlmConfig) => void
+  setJudge1Config: (config: LlmConfig) => void
+  setJudge2Config: (config: LlmConfig) => void
+  setJudge3Config: (config: LlmConfig) => void
   setProviderConfigs: (configs: ProviderConfigs) => void
   setActivePresetId: (id: string | null) => void
   setSearchApiConfig: (config: SearchApiConfig) => void
@@ -423,6 +429,39 @@ export const useWikiStore = create<WikiState>((set) => ({
   pendingScrollImageSrc: null,
   activeView: "wiki",
   llmConfig: {
+    provider: "openai",
+    apiKey: "",
+    maxContextSize: 204800,
+    model: "",
+    ollamaUrl: "http://localhost:11434",
+    customEndpoint: "",
+    azureApiVersion: "2024-10-21",
+    reasoning: { mode: "auto" },
+    localCliIsolation: false,
+  },
+  judge1Config: {
+    provider: "openai",
+    apiKey: "",
+    maxContextSize: 204800,
+    model: "",
+    ollamaUrl: "http://localhost:11434",
+    customEndpoint: "",
+    azureApiVersion: "2024-10-21",
+    reasoning: { mode: "auto" },
+    localCliIsolation: false,
+  },
+  judge2Config: {
+    provider: "openai",
+    apiKey: "",
+    maxContextSize: 204800,
+    model: "",
+    ollamaUrl: "http://localhost:11434",
+    customEndpoint: "",
+    azureApiVersion: "2024-10-21",
+    reasoning: { mode: "auto" },
+    localCliIsolation: false,
+  },
+  judge3Config: {
     provider: "openai",
     apiKey: "",
     maxContextSize: 204800,
@@ -525,7 +564,7 @@ export const useWikiStore = create<WikiState>((set) => ({
   mineruConfig: { enabled: false, token: "", modelVersion: "vlm" },
 
   // Default `enabled: true` preserves the pre-toggle behavior: anyone
-  // who already had `LLM_WIKI_API_TOKEN` set or `apiConfig.token`
+  // who already had `WIKIMIND_API_TOKEN` set or `apiConfig.token`
   // hand-edited keeps their working API. New users land in
   // "enabled + no token = 401 on every endpoint" — fail-closed by
   // virtue of the token being empty.
@@ -545,6 +584,9 @@ export const useWikiStore = create<WikiState>((set) => ({
   graphUiState: createDefaultGraphUiState(),
 
   setLlmConfig: (llmConfig) => set({ llmConfig }),
+  setJudge1Config: (judge1Config) => set({ judge1Config }),
+  setJudge2Config: (judge2Config) => set({ judge2Config }),
+  setJudge3Config: (judge3Config) => set({ judge3Config }),
   setProviderConfigs: (providerConfigs) => set({ providerConfigs }),
   setActivePresetId: (activePresetId) => set({ activePresetId }),
   setSearchApiConfig: (searchApiConfig) => set({ searchApiConfig }),
@@ -568,3 +610,4 @@ export const useWikiStore = create<WikiState>((set) => ({
 }))
 
 export type { WikiState, LlmConfig, SearchApiConfig, EmbeddingConfig, MultimodalConfig, OutputLanguage, ProxyConfig, ScheduledImportConfig, SourceWatchConfig, ApiConfig }
+

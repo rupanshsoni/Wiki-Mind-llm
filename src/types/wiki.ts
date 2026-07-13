@@ -1,5 +1,5 @@
-export interface WikiProject {
-  /** Stable UUID, persisted inside the project at .llm-wiki/project.json.
+﻿export interface WikiProject {
+  /** Stable UUID, persisted inside the project at .wikimind/project.json.
    *  Survives the user moving or renaming the project folder. */
   id: string
   name: string
@@ -18,3 +18,4 @@ export interface WikiPage {
   content: string
   frontmatter: Record<string, unknown>
 }
+

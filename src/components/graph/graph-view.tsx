@@ -200,11 +200,24 @@ function useResolvedDarkMode(): boolean {
   return isDark
 }
 
-function nodeColor(type: string): string {
+function nodeTypeColor(type: string): string {
   if (NODE_TYPE_COLORS[type]) return NODE_TYPE_COLORS[type]
   let hash = 0
   for (const char of type) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
   return CUSTOM_NODE_COLORS[hash % CUSTOM_NODE_COLORS.length] ?? NODE_TYPE_COLORS.other
+}
+
+function nodeColor(node: GraphNode): string {
+  if (node.type === "claim") {
+    switch (node.freshnessState) {
+      case "fresh": return "#22c55e"      // green-500
+      case "aging": return "#eab308"      // yellow-500
+      case "stale": return "#f97316"      // orange-500
+      case "decayed": return "#ef4444"    // red-500
+      default: return "#22c55e"
+    }
+  }
+  return nodeTypeColor(node.type)
 }
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -332,7 +345,7 @@ function GraphLoader({
       const cached = positionCache.get(node.id)
       const color = colorMode === "community"
         ? COMMUNITY_COLORS[node.community % COMMUNITY_COLORS.length]
-        : nodeColor(node.type)
+        : nodeColor(node)
       graph.addNode(node.id, {
         type: "circle",
         x: cached?.x ?? Math.random() * 100,
@@ -357,15 +370,19 @@ function GraphLoader({
           const size = 0.5 + normalizedWeight * 3.5 // 0.5..4
           // Stronger relationships → darker color
           const alpha = Math.round(40 + normalizedWeight * 180) // 40..220
-          const color = `rgba(100,116,139,${alpha / 255})` // slate-500 with variable opacity
+          let color = `rgba(100,116,139,${alpha / 255})` // slate-500 with variable opacity
+          if (edge.isContradiction) {
+            color = "#ef4444" // Bright red for contradictions!
+          }
           graph.addEdgeWithKey(edgeKey, edge.source, edge.target, {
             color,
-            size,
+            size: edge.isContradiction ? 2.5 : size,
             weight: edge.weight,
             normalizedWeight,
             sourceNode: edge.source,
             targetNode: edge.target,
-            lowPriority: weakEdgeThreshold > 0 && normalizedWeight < weakEdgeThreshold,
+            lowPriority: weakEdgeThreshold > 0 && normalizedWeight < weakEdgeThreshold && !edge.isContradiction,
+            type: edge.isContradiction ? "dotted" : "line",
           })
         }
       }
@@ -1199,6 +1216,14 @@ export function GraphView() {
                     />
                     <span>{t("graph.hideIsolated")}</span>
                   </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={filters.hideClaims}
+                      onChange={(e) => setFilters((prev) => ({ ...prev, hideClaims: e.target.checked }))}
+                    />
+                    <span>Hide Claims</span>
+                  </label>
                 </div>
 
                 <div className="space-y-1.5">
@@ -1428,8 +1453,8 @@ export function GraphView() {
                             <span
                               className="inline-block h-3 w-3 rounded-full shrink-0 shadow-sm"
                               style={{
-                                backgroundColor: isHidden ? "#94a3b8" : nodeColor(type),
-                                boxShadow: `0 0 4px ${hexToRgba(isHidden ? "#94a3b8" : nodeColor(type), 0.4)}`,
+                                backgroundColor: isHidden ? "#94a3b8" : nodeTypeColor(type),
+                                boxShadow: `0 0 4px ${hexToRgba(isHidden ? "#94a3b8" : nodeTypeColor(type), 0.4)}`,
                               }}
                             />
                             <span className={hoveredType === type ? "text-foreground font-medium" : "text-muted-foreground"}>

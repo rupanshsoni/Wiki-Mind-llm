@@ -12,12 +12,14 @@ export interface GraphNode {
   path: string
   linkCount: number // inbound + outbound
   community: number // community id from Louvain detection
+  freshnessState?: string // "fresh", "aging", "stale", "decayed"
 }
 
 export interface GraphEdge {
   source: string
   target: string
   weight: number // relevance score between source and target
+  isContradiction?: boolean
 }
 
 export interface CommunityInfo {
@@ -152,6 +154,47 @@ function extractWikilinks(content: string): string[] {
   return links
 }
 
+function extractContradictions(content: string): string[] {
+  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/)
+  if (!frontmatterMatch) return []
+  const fm = frontmatterMatch[1]
+  
+  const contradictionsMatch = fm.match(/^contradictions:\s*(?:\[(.*?)\]|[\s\S]*?)(?=(?:^\w+:|^-|\s*$))/m)
+  if (!contradictionsMatch) return []
+  
+  const val = contradictionsMatch[1] ? contradictionsMatch[1].trim() : contradictionsMatch[0].trim()
+  if (val === "[]" || val.startsWith("contradictions: []")) return []
+  
+  if (val.startsWith("[") && val.endsWith("]")) {
+    return val.slice(1, -1).split(",").map(s => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean)
+  }
+  
+  const lines = fm.split("\n")
+  const list: string[] = []
+  let inContradictions = false
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (trimmed.startsWith("contradictions:")) {
+      inContradictions = true
+      continue
+    }
+    if (inContradictions) {
+      if (trimmed.startsWith("- ")) {
+        list.push(trimmed.slice(2).trim().replace(/^["']|["']$/g, ""))
+      } else if (trimmed.includes(":") && !trimmed.startsWith("-")) {
+        break
+      }
+    }
+  }
+  return list
+}
+
+function extractFreshnessState(content: string): string | undefined {
+  const frontmatterTypeMatch = content.match(/^---\n[\s\S]*?^freshness_state:\s*["']?(.+?)["']?\s*$/m)
+  if (frontmatterTypeMatch) return frontmatterTypeMatch[1].trim().toLowerCase()
+  return undefined
+}
+
 function fileNameToId(fileName: string): string {
   return fileName.replace(/\.md$/, "")
 }
@@ -176,7 +219,7 @@ export async function buildWikiGraph(
   // Build a map of id -> node data
   const nodeMap = new Map<
     string,
-    { id: string; label: string; type: string; path: string; links: string[] }
+    { id: string; label: string; type: string; path: string; links: string[]; contradictions: string[]; freshnessState?: string }
   >()
 
   for (const file of mdFiles) {
@@ -195,6 +238,8 @@ export async function buildWikiGraph(
       type: extractType(content),
       path: file.path,
       links: extractWikilinks(content),
+      contradictions: extractContradictions(content),
+      freshnessState: extractFreshnessState(content),
     })
   }
 
@@ -214,7 +259,7 @@ export async function buildWikiGraph(
     linkCounts.set(id, 0)
   }
 
-  const rawEdges: GraphEdge[] = []
+  const rawEdges: { source: string; target: string; weight: number; isContradiction?: boolean }[] = []
 
   for (const [sourceId, nodeData] of nodeMap) {
     for (const targetRaw of nodeData.links) {
@@ -228,11 +273,22 @@ export async function buildWikiGraph(
       linkCounts.set(sourceId, (linkCounts.get(sourceId) ?? 0) + 1)
       linkCounts.set(targetId, (linkCounts.get(targetId) ?? 0) + 1)
     }
+
+    for (const contradictionRaw of nodeData.contradictions) {
+      const targetId = resolveTarget(contradictionRaw, nodeMap)
+      if (targetId === null) continue
+      if (targetId === sourceId) continue
+
+      rawEdges.push({ source: sourceId, target: targetId, weight: 1, isContradiction: true })
+
+      linkCounts.set(sourceId, (linkCounts.get(sourceId) ?? 0) + 1)
+      linkCounts.set(targetId, (linkCounts.get(targetId) ?? 0) + 1)
+    }
   }
 
   // Deduplicate edges
   const seenEdges = new Set<string>()
-  const dedupedEdges: { source: string; target: string }[] = []
+  const dedupedEdges: { source: string; target: string; isContradiction?: boolean }[] = []
   for (const edge of rawEdges) {
     const key = `${edge.source}:::${edge.target}`
     const reverseKey = `${edge.target}:::${edge.source}`
@@ -261,7 +317,7 @@ export async function buildWikiGraph(
         weight = calculateRelevance(nodeA, nodeB, retrievalGraph)
       }
     }
-    return { source: e.source, target: e.target, weight }
+    return { source: e.source, target: e.target, weight, isContradiction: e.isContradiction }
   })
 
   // Build preliminary nodes for community detection
@@ -280,6 +336,7 @@ export async function buildWikiGraph(
     path: n.path,
     linkCount: linkCounts.get(n.id) ?? 0,
     community: assignments.get(n.id) ?? 0,
+    freshnessState: n.freshnessState,
   }))
 
   return { nodes, edges, communities }

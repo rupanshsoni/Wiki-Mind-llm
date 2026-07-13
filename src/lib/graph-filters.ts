@@ -6,6 +6,7 @@ export interface GraphFilterState {
   hiddenNodeIds: ReadonlySet<string>
   hideStructural: boolean
   hideIsolated: boolean
+  hideClaims: boolean
   minLinks?: number
   maxLinks?: number
 }
@@ -21,6 +22,7 @@ export const DEFAULT_GRAPH_FILTERS: GraphFilterState = {
   hiddenNodeIds: new Set(),
   hideStructural: true,
   hideIsolated: false,
+  hideClaims: false,
   minLinks: undefined,
   maxLinks: undefined,
 }
@@ -66,6 +68,10 @@ export function applyGraphFilters(
       hiddenNodeIds.add(node.id)
       continue
     }
+    if (filters.hideClaims && node.type === "claim") {
+      hiddenNodeIds.add(node.id)
+      continue
+    }
     if (filters.minLinks !== undefined && node.linkCount < filters.minLinks) {
       hiddenNodeIds.add(node.id)
       continue
@@ -88,6 +94,7 @@ export function hasActiveGraphFilters(filters: GraphFilterState): boolean {
   return (
     filters.hideStructural ||
     filters.hideIsolated ||
+    filters.hideClaims ||
     filters.hiddenTypes.size > 0 ||
     filters.hiddenNodeIds.size > 0 ||
     filters.minLinks !== undefined ||

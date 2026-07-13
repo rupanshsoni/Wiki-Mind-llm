@@ -13,6 +13,7 @@ import {
   Layers,
   Calendar,
   Tag as TagIcon,
+  Shield,
 } from "lucide-react"
 import type { FrontmatterValue } from "@/lib/frontmatter"
 import { getWikiTypeStyle } from "@/lib/wiki-type-style"
@@ -37,6 +38,10 @@ const TOP_LEVEL_KEYS = new Set([
   "sources",
   "related",
   "origin",
+  "claim_count",
+  "stale_claim_count",
+  "avg_confidence",
+  "last_audited",
 ])
 
 export function FrontmatterPanel({ data }: FrontmatterPanelProps) {
@@ -52,6 +57,11 @@ export function FrontmatterPanel({ data }: FrontmatterPanelProps) {
   const tags = arrayValue(data.tags)
   const sources = arrayValue(data.sources)
   const related = arrayValue(data.related)
+
+  const claimCount = typeof data.claim_count === "number" ? data.claim_count : null
+  const staleClaimCount = typeof data.stale_claim_count === "number" ? data.stale_claim_count : null
+  const avgConfidence = typeof data.avg_confidence === "number" ? data.avg_confidence : null
+  const lastAudited = typeof data.last_audited === "string" ? data.last_audited : null
 
   const extras = useMemo(
     () =>
@@ -135,6 +145,48 @@ export function FrontmatterPanel({ data }: FrontmatterPanelProps) {
         <div className="mx-4 mt-3 rounded border-l-2 border-primary/40 bg-primary/5 px-3 py-1.5 text-xs text-foreground/80">
           <span className="font-medium text-muted-foreground">Origin: </span>
           {origin}
+        </div>
+      )}
+
+      {/* Audit Stats Section ────────────────────────────────────── */}
+      {(claimCount !== null || avgConfidence !== null || lastAudited !== null) && (
+        <div className="px-4 pt-4 border-t border-border/40 mt-3">
+          <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <Shield className="h-3.5 w-3.5 text-primary" />
+            Audit Statistics
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs bg-muted/20 rounded-lg p-3 border border-border/30">
+            {claimCount !== null && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Total Claims:</span>
+                <span className="font-semibold text-foreground">{claimCount}</span>
+              </div>
+            )}
+            {staleClaimCount !== null && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Stale Claims:</span>
+                <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  staleClaimCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"
+                }`}>
+                  {staleClaimCount}
+                </span>
+              </div>
+            )}
+            {avgConfidence !== null && (
+              <div className="flex justify-between items-center col-span-2 border-t border-border/20 pt-2 mt-1">
+                <span className="text-muted-foreground">Avg Confidence:</span>
+                <span className="font-semibold text-foreground">
+                  {Math.round(avgConfidence * 100)}%
+                </span>
+              </div>
+            )}
+            {lastAudited !== null && (
+              <div className="flex justify-between items-center col-span-2 border-t border-border/20 pt-2 mt-1">
+                <span className="text-muted-foreground">Last Audited:</span>
+                <span className="font-medium text-foreground">{lastAudited}</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
