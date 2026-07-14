@@ -85,14 +85,19 @@ export function CreateProjectDialog({ open: isOpen, onOpenChange, onCreated }: C
   }
 
   async function handleBrowse() {
-    const selected = await open({
-      directory: true,
-      multiple: false,
-      title: t("project.browse"),
-    })
-    if (selected) {
-      markEdited()
-      setPath(selected)
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: t("project.browse"),
+      })
+      if (selected) {
+        markEdited()
+        setPath(selected)
+      }
+    } catch (err) {
+      console.error("[create-project] failed to open directory dialog:", err)
+      setError(String(err))
     }
   }
 

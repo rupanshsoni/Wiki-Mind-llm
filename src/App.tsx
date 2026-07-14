@@ -9,7 +9,7 @@ import { useLintStore } from "@/stores/lint-store"
 import { useChatStore } from "@/stores/chat-store"
 import { BASE_FONT_SIZE_PX, useZoomStore } from "@/stores/zoom-store"
 import { openProject } from "@/commands/fs"
-import { getLastProject, getRecentProjects, saveLastProject, loadLlmConfig, loadLanguage, loadSearchApiConfig, loadEmbeddingConfig, loadMineruConfig, loadMultimodalConfig, loadOutputLanguage, loadProviderConfigs, loadActivePresetId, loadProxyConfig, loadScheduledImportConfig, saveScheduledImportConfig, loadSourceWatchConfig, loadApiConfig, loadGeneralConfig, loadZoomLevel } from "@/lib/project-store"
+import { getLastProject, getRecentProjects, saveLastProject, loadLlmConfig, loadJudge1Config, loadJudge2Config, loadJudge3Config, loadLanguage, loadSearchApiConfig, loadEmbeddingConfig, loadMineruConfig, loadMultimodalConfig, loadOutputLanguage, loadProviderConfigs, loadActivePresetId, loadProxyConfig, loadScheduledImportConfig, saveScheduledImportConfig, loadSourceWatchConfig, loadApiConfig, loadGeneralConfig, loadZoomLevel } from "@/lib/project-store"
 import { loadReviewItems, loadLintItems, loadChatHistory, loadChatPreferences } from "@/lib/persist"
 import { setupAutoSave } from "@/lib/auto-save"
 import { startClipWatcher } from "@/lib/clip-watcher"
@@ -287,6 +287,18 @@ function App() {
         if (savedConfig) {
           useWikiStore.getState().setLlmConfig(savedConfig)
         }
+        const savedJudge1 = await loadJudge1Config()
+        if (savedJudge1) {
+          useWikiStore.getState().setJudge1Config(savedJudge1)
+        }
+        const savedJudge2 = await loadJudge2Config()
+        if (savedJudge2) {
+          useWikiStore.getState().setJudge2Config(savedJudge2)
+        }
+        const savedJudge3 = await loadJudge3Config()
+        if (savedJudge3) {
+          useWikiStore.getState().setJudge3Config(savedJudge3)
+        }
         const savedProviderConfigs = await loadProviderConfigs()
         if (savedProviderConfigs) {
           useWikiStore.getState().setProviderConfigs(savedProviderConfigs)
@@ -512,11 +524,18 @@ function App() {
   }
 
   async function handleOpenProject() {
-    const selected = await open({
-      directory: true,
-      multiple: false,
-      title: "Open Wiki Project",
-    })
+    let selected: string | null = null
+    try {
+      selected = await open({
+        directory: true,
+        multiple: false,
+        title: "Open Wiki Project",
+      })
+    } catch (err) {
+      console.error("[open-project] failed to open folder dialog:", err)
+      window.alert(`Failed to open folder dialog: ${err}`)
+      return
+    }
     if (!selected) return
     try {
       const proj = await openProject(selected)
