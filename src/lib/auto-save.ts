@@ -1,4 +1,4 @@
-import { useReviewStore } from "@/stores/review-store"
+﻿import { useReviewStore } from "@/stores/review-store"
 import { useLintStore } from "@/stores/lint-store"
 import { useChatStore } from "@/stores/chat-store"
 import { useWikiStore } from "@/stores/wiki-store"
@@ -11,7 +11,7 @@ let chatTimer: ReturnType<typeof setTimeout> | null = null
 // While suspended, the store subscriptions skip writing. This is essential
 // during a project switch: resetProjectState() clears every store to empty,
 // and without this guard the debounced callbacks would persist those empty
-// arrays back to the OUTGOING project's .llm-wiki/*.json — wiping its pending
+// arrays back to the OUTGOING project's .wikimind/*.json — wiping its pending
 // review / deep-research items. The switch flow flushes real data to disk via
 // flushAndSuspendAutoSave() first, then resumes once the new project loads.
 let suspended = false
@@ -126,3 +126,4 @@ export function setupAutoSave(): void {
     }, 2000)
   })
 }
+

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from "react"
+﻿import { useRef, useEffect, useCallback, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { convertFileSrc, invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
@@ -206,7 +206,7 @@ function ConversationSidebar({
                         // Delete persisted chat file
                         const proj = useWikiStore.getState().project
                         if (proj) {
-                          deleteFile(`${proj.path}/.llm-wiki/chats/${conv.id}.json`).catch(() => {})
+                          deleteFile(`${proj.path}/.wikimind/chats/${conv.id}.json`).catch(() => {})
                         }
                       }}
                     >
@@ -943,7 +943,7 @@ export function ChatPanel() {
         }
 
         const contextText = [
-          "You have access to the current LLM Wiki project context below. Use it as retrieved evidence when it is relevant.",
+          "You have access to the current WikiMind project context below. Use it as retrieved evidence when it is relevant.",
           "",
           backendResponseText(backendResponse),
           "",
@@ -962,7 +962,7 @@ export function ChatPanel() {
         const finalMessages: LlmChatMessage[] = [
           {
             role: "system",
-            content: "Answer using the provided LLM Wiki context and references. If the context is insufficient, say what is missing instead of inventing details.",
+            content: "Answer using the provided WikiMind context and references. If the context is insufficient, say what is missing instead of inventing details.",
           },
           ...(sendOptions.historyOverride ?? chatMessagesToLLM(priorMessages)),
           { role: "user", content: userContent },
@@ -1611,3 +1611,4 @@ function isAbortLikeError(err: unknown): boolean {
   if (!(err instanceof Error)) return false
   return err.name === "AbortError" || /abort|cancel/i.test(err.message)
 }
+

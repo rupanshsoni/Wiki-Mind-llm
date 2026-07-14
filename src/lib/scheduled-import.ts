@@ -1,4 +1,4 @@
-import {
+﻿import {
   copyFile,
   fileExists,
   getFileMd5,
@@ -52,8 +52,8 @@ let scanning = false
 let activeRunId = 0
 const managedPathWarningKeys = new Set<string>()
 
-const DB_PATH = ".llm-wiki/scheduled-import-db.json"
-const LEGACY_DB_DIR = ".llm-wiki-imported"
+const DB_PATH = ".wikimind/scheduled-import-db.json"
+const LEGACY_DB_DIR = ".wikimind-imported"
 const SCHEDULED_IMPORT_DIR = "scheduled-import"
 const MAX_SCHEDULED_IMPORT_BYTES = 100 * 1024 * 1024
 const SCHEDULED_IMPORT_CONFIG_EXTENSIONS = new Set(["json", "yaml", "yml", "xml"])
@@ -129,7 +129,7 @@ export function isProjectManagedScheduledImportPath(
     isPathInside(root, projectSubpath(project, "raw")) ||
     isPathInside(root, projectSubpath(project, "raw/sources")) ||
     isPathInside(root, projectSubpath(project, "wiki")) ||
-    isPathInside(root, projectSubpath(project, ".llm-wiki"))
+    isPathInside(root, projectSubpath(project, ".wikimind"))
   )
 }
 
@@ -141,7 +141,7 @@ function notifyManagedScheduledImportPath(project: WikiProject, importRoot: stri
     type: "ingest",
     title: "Scheduled import skipped",
     status: "error",
-    detail: `Scheduled import path is inside or contains the current LLM Wiki project: ${importRoot}. Choose an external folder; project sources are handled by source folder monitoring.`,
+    detail: `Scheduled import path is inside or contains the current WikiMind project: ${importRoot}. Choose an external folder; project sources are handled by source folder monitoring.`,
     filesWritten: [],
   })
 }
@@ -202,7 +202,7 @@ function safeRelativePath(path: string): string {
 
 export function isScheduledImportInternalPath(path: string): boolean {
   const parts = normalizePath(path).split("/")
-  return parts.includes(LEGACY_DB_DIR) || parts.includes(".llm-wiki")
+  return parts.includes(LEGACY_DB_DIR) || parts.includes(".wikimind")
 }
 
 export function shouldSkipScheduledImportFile(
@@ -474,3 +474,4 @@ export function stopScheduledImport(): void {
     scanTimer = null
   }
 }
+

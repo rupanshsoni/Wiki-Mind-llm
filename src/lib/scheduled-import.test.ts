@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+﻿import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { WikiProject } from "@/types/wiki"
 
 const mocks = vi.hoisted(() => ({
@@ -106,7 +106,7 @@ describe("scheduled import path handling", () => {
       isProjectManagedScheduledImportPath(projectPath, `${projectPath}/wiki`),
     ).toBe(true)
     expect(
-      isProjectManagedScheduledImportPath(projectPath, `${projectPath}/.llm-wiki`),
+      isProjectManagedScheduledImportPath(projectPath, `${projectPath}/.wikimind`),
     ).toBe(true)
     expect(
       isProjectManagedScheduledImportPath(projectPath, "/Users/me"),
@@ -133,7 +133,7 @@ describe("scheduled import path handling", () => {
 
   it("skips project internals and generated wiki/cache files", () => {
     expect(
-      shouldSkipScheduledImportFile(projectPath, `${projectPath}/.llm-wiki/db.json`),
+      shouldSkipScheduledImportFile(projectPath, `${projectPath}/.wikimind/db.json`),
     ).toBe(true)
     expect(
       shouldSkipScheduledImportFile(projectPath, `${projectPath}/wiki/index.md`),
@@ -274,3 +274,4 @@ describe("scanAndImport failure handling", () => {
     )
   })
 })
+

@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "@/commands/fs"
+﻿import { readFile, writeFile } from "@/commands/fs"
 import { autoIngest } from "./ingest"
 import { useWikiStore } from "@/stores/wiki-store"
 import { normalizePath, isAbsolutePath } from "@/lib/path-utils"
@@ -62,7 +62,7 @@ function resetQueueAccounting(): void {
 // ── Persistence ───────────────────────────────────────────────────────────
 
 function queueFilePath(projectPath: string): string {
-  return `${normalizePath(projectPath)}/.llm-wiki/ingest-queue.json`
+  return `${normalizePath(projectPath)}/.wikimind/ingest-queue.json`
 }
 
 async function saveQueue(projectPath: string): Promise<void> {
@@ -819,3 +819,4 @@ async function processNext(projectId: string): Promise<void> {
   processing = false
   processNext(projectId)
 }
+

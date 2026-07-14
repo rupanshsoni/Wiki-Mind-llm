@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tier 4 — real-FS integration tests for persistence.
  *
  * Tests exercise saveReviewItems / loadReviewItems and saveChatHistory /
@@ -75,10 +75,10 @@ describe("review persistence — round-trip", () => {
     ])
   })
 
-  it("creates the .llm-wiki directory on first save", async () => {
-    expect(await fileExists(`${tmp.path}/.llm-wiki`)).toBe(false)
+  it("creates the .wikimind directory on first save", async () => {
+    expect(await fileExists(`${tmp.path}/.wikimind`)).toBe(false)
     await saveReviewItems(tmp.path, [makeReview()])
-    expect(await fileExists(`${tmp.path}/.llm-wiki/review.json`)).toBe(true)
+    expect(await fileExists(`${tmp.path}/.wikimind/review.json`)).toBe(true)
   })
 
   it("returns empty array when the file is absent", async () => {
@@ -87,7 +87,7 @@ describe("review persistence — round-trip", () => {
   })
 
   it("returns empty array when the file is corrupted JSON", async () => {
-    await writeFileRaw(`${tmp.path}/.llm-wiki/review.json`, "{not valid json")
+    await writeFileRaw(`${tmp.path}/.wikimind/review.json`, "{not valid json")
     const loaded = await loadReviewItems(tmp.path)
     expect(loaded).toEqual([])
   })
@@ -106,7 +106,7 @@ describe("review persistence — round-trip", () => {
   })
 
   it("migrates old counter review ids and collapses duplicate content on load", async () => {
-    await writeFileRaw(`${tmp.path}/.llm-wiki/review.json`, JSON.stringify([
+    await writeFileRaw(`${tmp.path}/.wikimind/review.json`, JSON.stringify([
       makeReview({ id: "review-1", title: "Attention", resolved: false, affectedPages: ["a.md"] }),
       makeReview({
         id: "review-2",
@@ -155,10 +155,10 @@ describe("lint persistence — round-trip", () => {
     expect(loaded).toEqual(items)
   })
 
-  it("creates the .llm-wiki directory on first save", async () => {
-    expect(await fileExists(`${tmp.path}/.llm-wiki`)).toBe(false)
+  it("creates the .wikimind directory on first save", async () => {
+    expect(await fileExists(`${tmp.path}/.wikimind`)).toBe(false)
     await saveLintItems(tmp.path, [makeLint()])
-    expect(await fileExists(`${tmp.path}/.llm-wiki/lint.json`)).toBe(true)
+    expect(await fileExists(`${tmp.path}/.wikimind/lint.json`)).toBe(true)
   })
 
   it("returns empty array when the file is absent", async () => {
@@ -167,7 +167,7 @@ describe("lint persistence — round-trip", () => {
   })
 
   it("returns empty array when the file is corrupted JSON", async () => {
-    await writeFileRaw(`${tmp.path}/.llm-wiki/lint.json`, "{not valid json")
+    await writeFileRaw(`${tmp.path}/.wikimind/lint.json`, "{not valid json")
     const loaded = await loadLintItems(tmp.path)
     expect(loaded).toEqual([])
   })
@@ -224,9 +224,9 @@ describe("chat persistence — round-trip (new format)", () => {
         makeMsg("m3", "c2", "other"),
       ],
     )
-    expect(await fileExists(`${tmp.path}/.llm-wiki/conversations.json`)).toBe(true)
-    expect(await fileExists(`${tmp.path}/.llm-wiki/chats/c1.json`)).toBe(true)
-    expect(await fileExists(`${tmp.path}/.llm-wiki/chats/c2.json`)).toBe(true)
+    expect(await fileExists(`${tmp.path}/.wikimind/conversations.json`)).toBe(true)
+    expect(await fileExists(`${tmp.path}/.wikimind/chats/c1.json`)).toBe(true)
+    expect(await fileExists(`${tmp.path}/.wikimind/chats/c2.json`)).toBe(true)
   })
 
   it("round-trips conversations + messages", async () => {
@@ -256,7 +256,7 @@ describe("chat persistence — round-trip (new format)", () => {
     expect(msg.images).toHaveLength(1)
     expect(msg.images?.[0].dataBase64).toBe("A".repeat(1024))
 
-    const raw = await readFileRaw(`${tmp.path}/.llm-wiki/chats/c1.json`)
+    const raw = await readFileRaw(`${tmp.path}/.wikimind/chats/c1.json`)
     expect(raw).not.toContain("dataBase64")
     expect(raw).not.toContain("image/png")
 
@@ -302,7 +302,7 @@ describe("chat persistence — round-trip (new format)", () => {
       disabledSkills: ["legacy"],
     })
 
-    const raw = await readFileRaw(`${tmp.path}/.llm-wiki/chat-preferences.json`)
+    const raw = await readFileRaw(`${tmp.path}/.wikimind/chat-preferences.json`)
     expect(raw).toContain('"useWebSearch": true')
   })
 
@@ -319,11 +319,11 @@ describe("chat persistence — round-trip (new format)", () => {
   it("skips missing per-conversation files without throwing", async () => {
     // conversations.json references c1 + c2, but chats/c2.json is missing
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/conversations.json`,
+      `${tmp.path}/.wikimind/conversations.json`,
       JSON.stringify([makeConv("c1"), makeConv("c2")]),
     )
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/chats/c1.json`,
+      `${tmp.path}/.wikimind/chats/c1.json`,
       JSON.stringify([makeMsg("m1", "c1", "hi")]),
     )
     const loaded = await loadChatHistory(tmp.path)
@@ -332,16 +332,16 @@ describe("chat persistence — round-trip (new format)", () => {
   })
 
   it("recovers conversations from orphan chat files when conversation index was overwritten empty", async () => {
-    await writeFileRaw(`${tmp.path}/.llm-wiki/conversations.json`, "[]")
+    await writeFileRaw(`${tmp.path}/.wikimind/conversations.json`, "[]")
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/chats/c1.json`,
+      `${tmp.path}/.wikimind/chats/c1.json`,
       JSON.stringify([
         makeMsg("m1", "c1", "First recovered question"),
         { ...makeMsg("m2", "c1", "answer"), role: "assistant" },
       ]),
     )
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/chats/c2.json`,
+      `${tmp.path}/.wikimind/chats/c2.json`,
       JSON.stringify([makeMsg("m3", "c2", "Second recovered question")]),
     )
 
@@ -356,7 +356,7 @@ describe("chat persistence — round-trip (new format)", () => {
 
   it("recovers conversations from orphan chat files when conversation index is missing", async () => {
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/chats/c1.json`,
+      `${tmp.path}/.wikimind/chats/c1.json`,
       JSON.stringify([makeMsg("m1", "c1", "Recovered without index")]),
     )
 
@@ -395,7 +395,7 @@ describe("chat persistence — legacy format fallback", () => {
       { id: "m2", role: "assistant", content: "older", timestamp: 200, conversationId: "ignored" },
     ]
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/chat-history.json`,
+      `${tmp.path}/.wikimind/chat-history.json`,
       JSON.stringify(legacyMessages),
     )
 
@@ -412,7 +412,7 @@ describe("chat persistence — legacy format fallback", () => {
       messages: [makeMsg("m1", "c1")],
     }
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/chat-history.json`,
+      `${tmp.path}/.wikimind/chat-history.json`,
       JSON.stringify(old),
     )
 
@@ -423,14 +423,14 @@ describe("chat persistence — legacy format fallback", () => {
 
   it("new format wins over legacy when both exist", async () => {
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/chat-history.json`,
+      `${tmp.path}/.wikimind/chat-history.json`,
       JSON.stringify({ conversations: [makeConv("legacy")], messages: [] }),
     )
     await writeFileRaw(
-      `${tmp.path}/.llm-wiki/conversations.json`,
+      `${tmp.path}/.wikimind/conversations.json`,
       JSON.stringify([makeConv("new")]),
     )
-    await writeFileRaw(`${tmp.path}/.llm-wiki/chats/new.json`, "[]")
+    await writeFileRaw(`${tmp.path}/.wikimind/chats/new.json`, "[]")
 
     const loaded = await loadChatHistory(tmp.path)
     expect(loaded.conversations[0].id).toBe("new")
@@ -439,3 +439,4 @@ describe("chat persistence — legacy format fallback", () => {
 
 // Keep readFileRaw exported (referenced for a future direct-inspection test)
 void readFileRaw
+

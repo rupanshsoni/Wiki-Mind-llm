@@ -1,4 +1,4 @@
-import {
+﻿import {
   createDirectory,
   deleteFile,
   fileExists,
@@ -608,9 +608,9 @@ async function appendIngestWarningLog(
   warnings: readonly string[],
 ): Promise<void> {
   if (warnings.length === 0) return
-  const logPath = `${projectPath}/.llm-wiki/ingest-warnings.log`
+  const logPath = `${projectPath}/.wikimind/ingest-warnings.log`
   try {
-    await createDirectory(`${projectPath}/.llm-wiki`)
+    await createDirectory(`${projectPath}/.wikimind`)
     const existing = await tryReadFile(logPath)
     const next = `${existing.trimEnd()}${existing.trim() ? "\n\n" : ""}${formatIngestWarningLogEntry(sourceIdentity, warnings).trimEnd()}\n`
     await writeFile(logPath, next)
@@ -833,7 +833,7 @@ async function autoIngestImpl(
   // Now that read_file's combined extraction has put `![](abs_path)`
   // markers inline in `sourceContent`, walk them and replace the
   // empty alt text with a vision-model-generated factual caption.
-  // SHA-256-keyed cache (`<project>/.llm-wiki/image-caption-cache.json`)
+  // SHA-256-keyed cache (`<project>/.wikimind/image-caption-cache.json`)
   // dedupes across runs and across documents (shared logos / chart
   // templates caption once, not once per document).
   //
@@ -1196,14 +1196,14 @@ async function autoIngestImpl(
   // Surface parser / writer warnings to the activity panel so users
   // don't have to open devtools to find out a block was dropped.
   // Keeping the base "Writing files..." detail on top and appending the
-  // first few warnings; full list is also persisted to .llm-wiki.
+  // first few warnings; full list is also persisted to .wikimind.
   let warningSummary = ""
   if (writeWarnings.length > 0) {
     await appendIngestWarningLog(pp, sourceIdentity, writeWarnings)
     warningSummary = writeWarnings.length === 1
       ? writeWarnings[0]
-      : `${writeWarnings.length} ingest warnings: ${writeWarnings.slice(0, 2).join(" · ")}${writeWarnings.length > 2 ? ` … (+${writeWarnings.length - 2} more in .llm-wiki/ingest-warnings.log)` : ""}`
-    activity.updateItem(activityId, { detail: `${warningSummary} — saved to .llm-wiki/ingest-warnings.log` })
+      : `${writeWarnings.length} ingest warnings: ${writeWarnings.slice(0, 2).join(" · ")}${writeWarnings.length > 2 ? ` … (+${writeWarnings.length - 2} more in .wikimind/ingest-warnings.log)` : ""}`
+    activity.updateItem(activityId, { detail: `${warningSummary} — saved to .wikimind/ingest-warnings.log` })
   }
 
   // Ensure source summary page exists (LLM may not have generated it correctly)
@@ -1316,7 +1316,7 @@ async function autoIngestImpl(
     ? `${writtenPaths.length} files written${reviewItems.length > 0 ? `, ${reviewItems.length} review item(s)` : ""}`
     : "No files generated"
   const detail = warningSummary
-    ? `${baseDetail} — ${warningSummary} (saved to .llm-wiki/ingest-warnings.log)`
+    ? `${baseDetail} — ${warningSummary} (saved to .wikimind/ingest-warnings.log)`
     : baseDetail
 
   activity.updateItem(activityId, {
@@ -2461,7 +2461,7 @@ function longSourceCheckpointPath(
   sourceSummarySlug: string,
   sourceHash: string,
 ): string {
-  return `${normalizePath(projectPath)}/.llm-wiki/ingest-progress/${sourceSummarySlug}-${sourceHash}.json`
+  return `${normalizePath(projectPath)}/.wikimind/ingest-progress/${sourceSummarySlug}-${sourceHash}.json`
 }
 
 function isCompatibleLongSourceCheckpoint(
@@ -2808,7 +2808,7 @@ export function buildPageMergeSystemPrompt(): string {
 
 /**
  * Best-effort snapshot of a page before a fallback merge overwrites
- * it. Saved to `.llm-wiki/page-history/<sanitized-path>-<timestamp>.md`
+ * it. Saved to `.wikimind/page-history/<sanitized-path>-<timestamp>.md`
  * so a user who later notices content lost in a merge can recover it.
  * Errors are swallowed by the caller (page-merge's tryBackup).
  */
@@ -2819,7 +2819,7 @@ async function backupExistingPage(
 ): Promise<void> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-")
   const sanitized = relativePath.replace(/[/\\]/g, "_")
-  const backupPath = `${projectPath}/.llm-wiki/page-history/${sanitized}-${stamp}`
+  const backupPath = `${projectPath}/.wikimind/page-history/${sanitized}-${stamp}`
   await writeFile(backupPath, existingContent)
 }
 
@@ -3231,3 +3231,4 @@ export async function executeIngestWrites(
 
   return writtenPaths
 }
+

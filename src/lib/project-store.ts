@@ -42,6 +42,9 @@ export async function addToRecentProjects(
 }
 
 const LLM_CONFIG_KEY = "llmConfig"
+const JUDGE1_CONFIG_KEY = "judge1Config"
+const JUDGE2_CONFIG_KEY = "judge2Config"
+const JUDGE3_CONFIG_KEY = "judge3Config"
 const PROVIDER_CONFIGS_KEY = "providerConfigs"
 const ACTIVE_PRESET_KEY = "activePresetId"
 
@@ -53,6 +56,36 @@ export async function saveLlmConfig(config: LlmConfig): Promise<void> {
 export async function loadLlmConfig(): Promise<LlmConfig | null> {
   const store = await getStore()
   return (await store.get<LlmConfig>(LLM_CONFIG_KEY)) ?? null
+}
+
+export async function saveJudge1Config(config: LlmConfig): Promise<void> {
+  const store = await getStore()
+  await store.set(JUDGE1_CONFIG_KEY, config)
+}
+
+export async function loadJudge1Config(): Promise<LlmConfig | null> {
+  const store = await getStore()
+  return (await store.get<LlmConfig>(JUDGE1_CONFIG_KEY)) ?? null
+}
+
+export async function saveJudge2Config(config: LlmConfig): Promise<void> {
+  const store = await getStore()
+  await store.set(JUDGE2_CONFIG_KEY, config)
+}
+
+export async function loadJudge2Config(): Promise<LlmConfig | null> {
+  const store = await getStore()
+  return (await store.get<LlmConfig>(JUDGE2_CONFIG_KEY)) ?? null
+}
+
+export async function saveJudge3Config(config: LlmConfig): Promise<void> {
+  const store = await getStore()
+  await store.set(JUDGE3_CONFIG_KEY, config)
+}
+
+export async function loadJudge3Config(): Promise<LlmConfig | null> {
+  const store = await getStore()
+  return (await store.get<LlmConfig>(JUDGE3_CONFIG_KEY)) ?? null
 }
 
 export async function saveProviderConfigs(configs: ProviderConfigs): Promise<void> {

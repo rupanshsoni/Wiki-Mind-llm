@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react"
+import { invoke } from "@tauri-apps/api/core"
 import { queueResearch } from "@/lib/deep-research"
 import {
   AlertTriangle,
@@ -259,7 +260,27 @@ export function ReviewView() {
         resolveItem(id, action)
       }
     } else {
-      resolveItem(id, action)
+      if (item?.type === "contradiction" && project) {
+        const parts = item.sourcePath?.split("/") ?? []
+        const filename = parts[parts.length - 1]
+        if (filename) {
+          invoke("maintenance_resolve_contradiction", {
+            projectPath: project.path,
+            filename,
+            resolution: action,
+            method: "human",
+          })
+            .then(() => resolveItem(id, action))
+            .catch((err: any) => {
+              console.error("Failed to resolve contradiction:", err)
+              window.alert("Failed to resolve contradiction: " + err)
+            })
+        } else {
+          resolveItem(id, action)
+        }
+      } else {
+        resolveItem(id, action)
+      }
     }
   }, [project, items, resolveItem])
 

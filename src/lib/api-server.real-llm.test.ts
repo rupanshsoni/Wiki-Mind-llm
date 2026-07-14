@@ -1,5 +1,5 @@
-/**
- * Real local-API tests against a running LLM Wiki desktop app.
+﻿/**
+ * Real local-API tests against a running WikiMind desktop app.
  *
  * These tests intentionally perform real HTTP calls to
  * http://127.0.0.1:19828/api/v1 and use a real project id. They are gated
@@ -28,7 +28,7 @@ const ENABLED = process.env.RUN_API_TESTS === "1" || process.env.RUN_LLM_TESTS =
 const BASE_URL = process.env.API_BASE_URL ?? API_SERVER_BASE_URL
 const PROJECT_ID =
   process.env.API_PROJECT_ID ?? "a0e90b29-fcf3-4364-9502-8bd1272de820"
-const API_TOKEN = process.env.API_TOKEN ?? process.env.LLM_WIKI_API_TOKEN ?? ""
+const API_TOKEN = process.env.API_TOKEN ?? process.env.WIKIMIND_API_TOKEN ?? ""
 const TEST_TOKEN = process.env.API_TEST_TOKEN ?? "llm-wiki-real-api-test-token"
 
 const TEST_TIMEOUT_MS = 30_000
@@ -122,7 +122,7 @@ async function api<T extends ApiEnvelope>(
       : authMode === "bearer"
         ? { Authorization: `Bearer ${token}` }
         : authMode === "xToken"
-          ? { "X-LLM-Wiki-Token": token }
+          ? { "X-WikiMind-Token": token }
           : authHeaders()
   const headers = {
     ...auth,
@@ -221,13 +221,13 @@ function appStateCandidates(): string[] {
   if (process.platform === "darwin") {
     candidates.push(
       path.join(home, "Library/Application Support/com.llmwiki.app/app-state.json"),
-      path.join(home, "Library/Application Support/LLM Wiki/app-state.json"),
+      path.join(home, "Library/Application Support/WikiMind/app-state.json"),
     )
   } else if (process.platform === "win32") {
     const appData = process.env.APPDATA ?? path.join(home, "AppData/Roaming")
     candidates.push(
       path.join(appData, "com.llmwiki.app/app-state.json"),
-      path.join(appData, "LLM Wiki/app-state.json"),
+      path.join(appData, "WikiMind/app-state.json"),
     )
   } else {
     candidates.push(
@@ -310,7 +310,7 @@ describe.skipIf(!ENABLED)("local API v1 against real project", () => {
     try {
       initialHealth = await waitForHealth(() => true, "server reachable", 2_000)
     } catch (err) {
-      serverUnavailableReason = `App is not running or the local API is unreachable at ${BASE_URL}. Launch LLM Wiki first, then re-run. ${String(err)}`
+      serverUnavailableReason = `App is not running or the local API is unreachable at ${BASE_URL}. Launch WikiMind first, then re-run. ${String(err)}`
       return
     }
     appStatePath = await resolveAppStatePath()
@@ -354,7 +354,7 @@ describe.skipIf(!ENABLED)("local API v1 against real project", () => {
       )
       const effectiveToken = h.tokenSource === "env" ? API_TOKEN : TEST_TOKEN
       if (!effectiveToken) {
-        console.warn("Skipping positive auth checks because the running app uses LLM_WIKI_API_TOKEN and API_TOKEN was not provided.")
+        console.warn("Skipping positive auth checks because the running app uses WIKIMIND_API_TOKEN and API_TOKEN was not provided.")
       }
 
       const noToken = await api<ApiEnvelope>("/api/v1/projects", {}, { auth: "none" })
@@ -802,3 +802,4 @@ describe.skipIf(!ENABLED)("local API v1 against real project", () => {
     TEST_TIMEOUT_MS,
   )
 })
+

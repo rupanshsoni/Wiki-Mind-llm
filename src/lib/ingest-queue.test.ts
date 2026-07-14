@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest"
+﻿import { describe, it, expect, beforeEach, vi } from "vitest"
 import { flushMicrotasks } from "@/test-helpers/deferred"
 
 // Mock autoIngest so tests control success/failure timing.
@@ -136,7 +136,7 @@ describe("ingest-queue — enqueue & basic processing", () => {
     const calls = mockWriteFile.mock.calls
     expect(calls.length).toBeGreaterThan(0)
     const queuePath = calls[0][0]
-    expect(queuePath).toContain(".llm-wiki/ingest-queue.json")
+    expect(queuePath).toContain(".wikimind/ingest-queue.json")
   })
 
   it("enqueueBatch queues multiple tasks and processes them serially", async () => {
@@ -643,7 +643,7 @@ describe("ingest-queue — pauseQueue & switch-project survival", () => {
     const writes = mockWriteFile.mock.calls
     expect(writes.length).toBeGreaterThan(0)
     const [pathArg, contentArg] = writes[writes.length - 1]
-    expect(String(pathArg)).toContain("/project/.llm-wiki/ingest-queue.json")
+    expect(String(pathArg)).toContain("/project/.wikimind/ingest-queue.json")
     const persisted = JSON.parse(String(contentArg)) as Array<{ status: string }>
     expect(persisted).toHaveLength(2)
     for (const t of persisted) expect(t.status).toBe("pending")
@@ -983,3 +983,4 @@ describe("cleanupWrittenFiles — embedding cascade", () => {
     expect(removePageEmbeddingMock).toHaveBeenCalledWith("C:/proj", "rope")
   })
 })
+

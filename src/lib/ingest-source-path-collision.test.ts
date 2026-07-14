@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { createTempProject, realFs, writeFileRaw } from "@/test-helpers/fs-temp"
@@ -395,7 +395,7 @@ describe("autoIngest source summary paths", () => {
       autoIngest(tmp.path, longSourcePath, llmConfig, undefined, "project-a"),
     ).rejects.toThrow("Chunk analysis stream failed")
 
-    const progressDir = path.join(tmp.path, ".llm-wiki", "ingest-progress")
+    const progressDir = path.join(tmp.path, ".wikimind", "ingest-progress")
     expect((await fs.readdir(progressDir)).filter((name) => name.endsWith(".json"))).toHaveLength(1)
 
     mockStreamChat.mockClear()
@@ -621,3 +621,4 @@ describe("autoIngest source summary paths", () => {
     expect(content).toContain('sources: ["project-a/config.yaml"]')
   })
 })
+

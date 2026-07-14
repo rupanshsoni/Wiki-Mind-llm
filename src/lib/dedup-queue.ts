@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Persistent serial queue for duplicate-merge operations.
  *
  * Why a queue (and not just kicking off `executeMerge` from the click
@@ -52,7 +52,7 @@ let currentAbortController: AbortController | null = null
 // ── Persistence ───────────────────────────────────────────────────────────
 
 function queueFilePath(projectPath: string): string {
-  return `${normalizePath(projectPath)}/.llm-wiki/dedup-queue.json`
+  return `${normalizePath(projectPath)}/.wikimind/dedup-queue.json`
 }
 
 async function saveQueue(projectPath: string): Promise<void> {
@@ -402,3 +402,4 @@ async function processNext(projectId: string): Promise<void> {
   processing = false
   processNext(projectId)
 }
+

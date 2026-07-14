@@ -1,4 +1,4 @@
-import { writeFile, readFile, createDirectory, listDirectory } from "@/commands/fs"
+﻿import { writeFile, readFile, createDirectory, listDirectory } from "@/commands/fs"
 import { normalizeReviewItems, type ReviewItem } from "@/stores/review-store"
 import type { LintItem } from "@/stores/lint-store"
 import type { DisplayMessage, Conversation } from "@/stores/chat-store"
@@ -7,20 +7,20 @@ import { normalizePath } from "@/lib/path-utils"
 import type { FileNode } from "@/types/wiki"
 
 async function ensureDir(projectPath: string): Promise<void> {
-  await createDirectory(`${projectPath}/.llm-wiki`).catch(() => {})
-  await createDirectory(`${projectPath}/.llm-wiki/chats`).catch(() => {})
+  await createDirectory(`${projectPath}/.wikimind`).catch(() => {})
+  await createDirectory(`${projectPath}/.wikimind/chats`).catch(() => {})
 }
 
 export async function saveReviewItems(projectPath: string, items: ReviewItem[]): Promise<void> {
   const pp = normalizePath(projectPath)
   await ensureDir(pp)
-  await writeFile(`${pp}/.llm-wiki/review.json`, JSON.stringify(items, null, 2))
+  await writeFile(`${pp}/.wikimind/review.json`, JSON.stringify(items, null, 2))
 }
 
 export async function loadReviewItems(projectPath: string): Promise<ReviewItem[]> {
   const pp = normalizePath(projectPath)
   try {
-    const content = await readFile(`${pp}/.llm-wiki/review.json`)
+    const content = await readFile(`${pp}/.wikimind/review.json`)
     return normalizeReviewItems(JSON.parse(content) as ReviewItem[])
   } catch {
     return []
@@ -30,13 +30,13 @@ export async function loadReviewItems(projectPath: string): Promise<ReviewItem[]
 export async function saveLintItems(projectPath: string, items: LintItem[]): Promise<void> {
   const pp = normalizePath(projectPath)
   await ensureDir(pp)
-  await writeFile(`${pp}/.llm-wiki/lint.json`, JSON.stringify(items, null, 2))
+  await writeFile(`${pp}/.wikimind/lint.json`, JSON.stringify(items, null, 2))
 }
 
 export async function loadLintItems(projectPath: string): Promise<LintItem[]> {
   const pp = normalizePath(projectPath)
   try {
-    const content = await readFile(`${pp}/.llm-wiki/lint.json`)
+    const content = await readFile(`${pp}/.wikimind/lint.json`)
     return JSON.parse(content) as LintItem[]
   } catch {
     return []
@@ -72,7 +72,7 @@ export async function saveChatHistory(
 
   // Save conversation list
   await writeFile(
-    `${pp}/.llm-wiki/conversations.json`,
+    `${pp}/.wikimind/conversations.json`,
     JSON.stringify(conversations, null, 2)
   )
 
@@ -91,7 +91,7 @@ export async function saveChatHistory(
     // Keep last 100 messages per conversation
     const toSave = msgs.slice(-100)
     await writeFile(
-      `${pp}/.llm-wiki/chats/${convId}.json`,
+      `${pp}/.wikimind/chats/${convId}.json`,
       JSON.stringify(toSave, null, 2)
     )
   }
@@ -101,13 +101,13 @@ export async function loadChatHistory(projectPath: string): Promise<PersistedCha
   const pp = normalizePath(projectPath)
   try {
     // Try new format: separate files per conversation
-    const convContent = await readFile(`${pp}/.llm-wiki/conversations.json`)
+    const convContent = await readFile(`${pp}/.wikimind/conversations.json`)
     const conversations = JSON.parse(convContent) as Conversation[]
 
     const allMessages: DisplayMessage[] = []
     for (const conv of conversations) {
       try {
-        const msgContent = await readFile(`${pp}/.llm-wiki/chats/${conv.id}.json`)
+        const msgContent = await readFile(`${pp}/.wikimind/chats/${conv.id}.json`)
         const msgs = JSON.parse(msgContent) as DisplayMessage[]
         allMessages.push(...msgs)
       } catch {
@@ -120,7 +120,7 @@ export async function loadChatHistory(projectPath: string): Promise<PersistedCha
     }
 
     // A previous startup race could overwrite conversations.json with [] while
-    // leaving .llm-wiki/chats/<id>.json intact. Rebuild a minimal conversation
+    // leaving .wikimind/chats/<id>.json intact. Rebuild a minimal conversation
     // index from those orphan message files so users do not have to recreate
     // chat sessions manually.
     const recovered = await recoverChatHistoryFromOrphanChatFiles(pp)
@@ -132,7 +132,7 @@ export async function loadChatHistory(projectPath: string): Promise<PersistedCha
 
     // Fall back to old format
     try {
-      const content = await readFile(`${pp}/.llm-wiki/chat-history.json`)
+      const content = await readFile(`${pp}/.wikimind/chat-history.json`)
       const parsed = JSON.parse(content)
 
       if (Array.isArray(parsed)) {
@@ -190,7 +190,7 @@ function conversationFromMessages(id: string, messages: DisplayMessage[]): Conve
 
 async function recoverChatHistoryFromOrphanChatFiles(projectPath: string): Promise<PersistedChatData> {
   try {
-    const chatDir = `${projectPath}/.llm-wiki/chats`
+    const chatDir = `${projectPath}/.wikimind/chats`
     const files = flattenFiles(await listDirectory(chatDir))
       .filter((node) => node.name.endsWith(".json"))
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -233,13 +233,13 @@ export async function saveChatPreferences(
 ): Promise<void> {
   const pp = normalizePath(projectPath)
   await ensureDir(pp)
-  await writeFile(`${pp}/.llm-wiki/chat-preferences.json`, JSON.stringify(preferences, null, 2))
+  await writeFile(`${pp}/.wikimind/chat-preferences.json`, JSON.stringify(preferences, null, 2))
 }
 
 export async function loadChatPreferences(projectPath: string): Promise<ChatPreferences> {
   const pp = normalizePath(projectPath)
   try {
-    const content = await readFile(`${pp}/.llm-wiki/chat-preferences.json`)
+    const content = await readFile(`${pp}/.wikimind/chat-preferences.json`)
     const parsed = JSON.parse(content) as Partial<ChatPreferences>
     return {
       useWebSearch: parsed.useWebSearch === true,
@@ -282,3 +282,4 @@ function normalizePersistedAgentMode(value: unknown): ChatAgentMode {
       return "standard"
   }
 }
+

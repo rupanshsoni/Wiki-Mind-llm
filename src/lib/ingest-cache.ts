@@ -1,10 +1,10 @@
-import { readFile, writeFile, fileExists } from "@/commands/fs"
+﻿import { readFile, writeFile, fileExists } from "@/commands/fs"
 import { normalizePath, isAbsolutePath } from "@/lib/path-utils"
 
 /**
  * SHA256-based ingest cache.
  * Stores hash of source file content → skips re-ingest if unchanged.
- * Cache file: .llm-wiki/ingest-cache.json
+ * Cache file: .wikimind/ingest-cache.json
  */
 
 interface CacheEntry {
@@ -26,7 +26,7 @@ async function sha256(content: string): Promise<string> {
 }
 
 function cachePath(projectPath: string): string {
-  return `${normalizePath(projectPath)}/.llm-wiki/ingest-cache.json`
+  return `${normalizePath(projectPath)}/.wikimind/ingest-cache.json`
 }
 
 async function loadCache(projectPath: string): Promise<CacheData> {
@@ -124,3 +124,4 @@ export async function removeFromIngestCache(
   delete newEntries[sourceFileName]
   await saveCache(projectPath, { entries: newEntries })
 }
+

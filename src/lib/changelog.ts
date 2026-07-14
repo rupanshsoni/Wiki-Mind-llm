@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Changelog shown in Settings → Changelog. Hardcoded rather than
  * pulled from GitHub Releases so it works offline and stays under
  * version control with the code that ships the changes.
@@ -236,7 +236,7 @@ export const CHANGELOG: ChangelogEntry[] = [
         "Updated Settings to manage API + MCP access together, including token guidance and a copyable MCP client configuration.",
       ],
       zh: [
-        "新增本地 MCP 服务，方便智能体客户端通过与桌面端一致的项目、搜索、图谱和文件接口访问 LLM Wiki。",
+        "新增本地 MCP 服务，方便智能体客户端通过与桌面端一致的项目、搜索、图谱和文件接口访问 WikiMind。",
         "设置中新增 API + MCP 管理入口，包含访问开关、token 提示和可复制的 MCP 客户端配置。",
       ],
     },
@@ -518,3 +518,4 @@ export const CHANGELOG: ChangelogEntry[] = [
     },
   },
 ]
+

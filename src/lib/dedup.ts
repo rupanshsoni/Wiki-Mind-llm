@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Duplicate-entity / -concept detection and merge for wiki maintenance.
  *
  * Problem: across re-ingests, the LLM names the same underlying
@@ -88,7 +88,7 @@ export interface MergeResult {
    *  Excludes the canonical path. */
   pagesToDelete: string[]
   /** Snapshot of every file the merge touches BEFORE the merge
-   *  was computed. Caller persists this to .llm-wiki/page-history/
+   *  was computed. Caller persists this to .wikimind/page-history/
    *  before writing changes so a bad merge can be rolled back. */
   backup: { path: string; content: string }[]
 }
@@ -557,3 +557,4 @@ function lineRefersToSlug(line: string, slugs: Set<string>): boolean {
   }
   return false
 }
+

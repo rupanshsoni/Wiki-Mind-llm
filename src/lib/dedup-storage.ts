@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Persistence for the dedup tool's "not duplicates" whitelist.
  *
  * When the user reviews a candidate group and says "these are NOT
@@ -8,13 +8,13 @@
  * sorted — see the canonical key logic in `dedup.ts`).
  *
  * Lives next to ingest-cache.json / image-caption-cache.json /
- * lexical-graph.json (when added) — same `.llm-wiki/` directory,
+ * lexical-graph.json (when added) — same `.wikimind/` directory,
  * same JSON-on-disk pattern.
  */
 import { readFile, writeFile, fileExists } from "@/commands/fs"
 import { normalizePath } from "@/lib/path-utils"
 
-const FILE_NAME = ".llm-wiki/dedup-not-duplicates.json"
+const FILE_NAME = ".wikimind/dedup-not-duplicates.json"
 
 export async function loadNotDuplicates(projectPath: string): Promise<string[][]> {
   const pp = normalizePath(projectPath)
@@ -66,3 +66,4 @@ export async function addNotDuplicate(
 function canonicalKey(slugs: string[]): string {
   return [...slugs].map((s) => s.toLowerCase()).sort().join(",")
 }
+

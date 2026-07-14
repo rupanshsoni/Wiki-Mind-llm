@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Unit coverage for the caption pipeline. Mocks `captionImage` and
  * the fs commands so we can pin the cache + rewrite logic without
  * touching either the LLM or the filesystem.
@@ -105,7 +105,7 @@ describe("captionMarkdownImages", () => {
     // Cache file written exactly once at the end of the batch.
     expect(mockWriteFile).toHaveBeenCalledTimes(1)
     const [cachePath, contents] = mockWriteFile.mock.calls[0] as [string, string]
-    expect(cachePath).toBe("/proj/.llm-wiki/image-caption-cache.json")
+    expect(cachePath).toBe("/proj/.wikimind/image-caption-cache.json")
     const written = JSON.parse(contents)
     const entries = Object.values(written) as Array<Record<string, unknown>>
     expect(entries).toHaveLength(1)
@@ -364,3 +364,4 @@ describe("captionMarkdownImages", () => {
     expect(opts.contextAfter).toBe("")
   })
 })
+

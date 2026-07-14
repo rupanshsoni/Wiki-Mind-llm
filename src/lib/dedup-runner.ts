@@ -1,4 +1,4 @@
-/**
+﻿/**
  * I/O wrapper that connects the pure dedup algorithm in dedup.ts
  * to the project's filesystem + LLM. The UI layer calls these
  * functions; everything below is about read/write/spawn-llm so
@@ -359,7 +359,7 @@ function isEmbeddingCoverageError(err: unknown): boolean {
  *   1. Load each group page's full content + every other wiki page
  *   2. Run mergeDuplicateGroup (LLM body merge + frontmatter
  *      union + cross-reference rewrites)
- *   3. Snapshot every touched file to .llm-wiki/page-history/
+ *   3. Snapshot every touched file to .wikimind/page-history/
  *      dedup-<timestamp>/
  *   4. Write canonical content
  *   5. Apply cross-reference rewrites
@@ -420,9 +420,9 @@ export async function executeMerge(
 
   // 2. Snapshot backup before any writes. If a write fails partway
   //    through, the user has the pre-merge state intact in
-  //    .llm-wiki/page-history/.
+  //    .wikimind/page-history/.
   const stamp = new Date().toISOString().replace(/[:.]/g, "-")
-  const backupDir = `${pp}/.llm-wiki/page-history/dedup-${stamp}`
+  const backupDir = `${pp}/.wikimind/page-history/dedup-${stamp}`
   for (const b of result.backup) {
     const sanitized = b.path.replace(/[/\\]/g, "_")
     await writeFile(`${backupDir}/${sanitized}`, b.content)
@@ -461,3 +461,4 @@ export async function executeMerge(
 
   return result
 }
+

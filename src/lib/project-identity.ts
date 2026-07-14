@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Project identity: stable UUID per project + global registry mapping
  * `UUID → current filesystem path`.
  *
@@ -7,7 +7,7 @@
  * via the registry at run time, so a moved folder doesn't orphan tasks.
  *
  * Storage:
- * - Per-project identity: `{project}/.llm-wiki/project.json`
+ * - Per-project identity: `{project}/.wikimind/project.json`
  *     `{ "id": "<uuid>", "createdAt": <ms> }`
  * - Global registry: Tauri plugin-store `app-state.json` key `projectRegistry`
  *     `{ [id]: { id, path, name, lastOpened } }`
@@ -34,15 +34,15 @@ export interface ProjectRegistryEntry {
 
 export type ProjectRegistry = Record<string, ProjectRegistryEntry>
 
-// ── Per-project identity (reads/creates `.llm-wiki/project.json`) ─────────
+// ── Per-project identity (reads/creates `.wikimind/project.json`) ─────────
 
 function identityPath(projectPath: string): string {
-  return `${normalizePath(projectPath)}/.llm-wiki/project.json`
+  return `${normalizePath(projectPath)}/.wikimind/project.json`
 }
 
 /**
  * Return the project's stable UUID. Generates + writes one on first call
- * for a project that doesn't have `.llm-wiki/project.json` yet.
+ * for a project that doesn't have `.wikimind/project.json` yet.
  */
 export async function ensureProjectId(projectPath: string): Promise<string> {
   const path = identityPath(projectPath)
@@ -129,3 +129,4 @@ export async function getProjectIdByPath(path: string): Promise<string | null> {
   }
   return null
 }
+
