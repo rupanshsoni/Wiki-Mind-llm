@@ -1,496 +1,439 @@
-# LLM Wiki
+# WikiMind
 
 <p align="center">
-  <img src="logo.jpg" width="128" height="128" style="border-radius: 22%;" alt="LLM Wiki Logo">
+  <img src="logo.png" width="128" height="128" style="border-radius: 22%;" alt="WikiMind Logo">
 </p>
 
 <p align="center">
-  <strong>A personal knowledge base that builds itself.</strong><br>
-  LLM reads your documents, builds a structured wiki, and keeps it current.
+  <strong>A Self-Maintaining Knowledge Agent with Autonomous Claim Decay & Multi-Voter Judge Ensembles</strong><br>
+  WikiMind compiles documents into a structured, interlinked wiki — then continuously audits its own knowledge, re-verifies stale claims, and resolves contradictions through background LLM judge panels.
 </p>
 
 <p align="center">
-  <a href="#what-is-this">What is this?</a> •
-  <a href="#what-we-changed--added">Features</a> •
+  <a href="#about">About</a> •
+  <a href="#core-philosophy-decay-first-knowledge">Core Philosophy</a> •
+  <a href="#what-wikimind-adds-beyond-llm_wiki">What WikiMind Adds</a> •
+  <a href="#feature-deep-dive">Feature Deep Dive</a> •
+  <a href="#the-decay-formula">Decay Formula</a> •
   <a href="#tech-stack">Tech Stack</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#credits">Credits</a> •
-  <a href="#license">License</a>
-</p>
-
-<p align="center">
-  English | <a href="README_CN.md">中文</a> | <a href="README_JA.md">日本語</a> | <a href="README_KO.md">한국어</a>
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#project-structure">Project Structure</a> •
+  <a href="#api--mcp-server">API & MCP</a> •
+  <a href="#agent-skills">Agent Skills</a> •
+  <a href="#credits">Credits</a>
 </p>
 
 ---
 
-<p align="center">
-  <img src="assets/overview.jpg" width="100%" alt="Overview">
-</p>
+## About
 
-## Features
+**WikiMind** is a cross-platform desktop application that transforms raw documents — PDFs, Word files, web pages, YouTube videos, GitHub repositories — into an active, self-correcting knowledge base. Built with **Tauri v2** (Rust backend) and **React 19** (TypeScript frontend), it runs entirely on your local machine.
 
-- **Two-Step Chain-of-Thought Ingest** — LLM analyzes first, then generates wiki pages with source traceability and incremental cache
-- **Multimodal Image Ingestion** — extract embedded images from PDFs, generate factual captions with a vision LLM, surface them in image-aware search results with lightbox preview and jump-to-source
-- **Optional MinerU PDF Parsing** — use MinerU cloud parsing for complex PDFs with tables, formulas, and dense layouts; the built-in local parser remains the default
-- **4-Signal Knowledge Graph** — relevance model with direct links, source overlap, Adamic-Adar, and type affinity
-- **Louvain Community Detection** — automatic knowledge cluster discovery with cohesion scoring
-- **Graph Insights** — surprising connections and knowledge gaps with one-click Deep Research
-- **Vector Semantic Search** — optional embedding-based retrieval via LanceDB, supports any OpenAI-compatible endpoint
-- **Persistent Ingest Queue** — serial processing with crash recovery, cancel, retry, and progress visualization
-- **Folder Import** — recursive folder import preserving directory structure, folder context as LLM classification hint
-- **Source Folder Auto-Watch** — detects external changes in `raw/sources/` and keeps ingest/delete cleanup in sync
-- **Deep Research** — LLM-optimized search topics, multi-query web search via Tavily, SerpApi, or SearXNG, auto-ingest results into wiki
-- **Rust Backend Chat Agent** — tool-using chat runtime with wiki/source/graph/web retrieval, workspace file generation, shell approval, cancellation, and streaming tool events
-- **Agent Skills** — scan and enable local `SKILL.md` folders, select skills with `/skill`, and let the Agent read skill instructions on demand
-- **Generated Outputs Preview** — Agent-created Markdown, HTML, images, and other workspace files appear as outputs with preview and quick folder access
-- **Mermaid Diagram Rendering** — render Mermaid code blocks directly in chat and preview, with compact syntax-error cards instead of raw parser output
-- **Async Review System** — LLM flags items for human judgment, predefined actions, pre-generated search queries
-- **Chrome Web Clipper** — one-click web page capture with auto-ingest into knowledge base
-- **Local HTTP API + MCP Server + AI Agent Skill** — built-in `127.0.0.1:19828` JSON API and bundled MCP server for hybrid search, file read, graph traversal, and source rescan; ready-made [agent skill](https://github.com/nashsu/llm_wiki_skill) installs into Claude Code / Codex with one command (`npx skills add …`)
+Unlike traditional RAG pipelines that re-derive answers from scratch on every query, WikiMind **compiles knowledge once** into a persistent, Obsidian-compatible wiki, then deploys autonomous background agents to keep that knowledge fresh. Every factual claim carries a **confidence score** that decays over time. When claims go stale, WikiMind automatically re-researches them, detects contradictions, and runs multi-model judge panels to resolve disputes — all without human intervention unless escalation is needed.
 
-## What is this?
+### This Is Not a Clone
 
-LLM Wiki is a cross-platform desktop application that turns your documents into an organized, interlinked knowledge base — automatically. Instead of traditional RAG (retrieve-and-answer from scratch every time), the LLM **incrementally builds and maintains a persistent wiki** from your sources. Knowledge is compiled once and kept current, not re-derived on every query.
+WikiMind is built upon and inspired by the excellent [nashsu/llm_wiki](https://github.com/nashsu/llm_wiki) — a full-featured desktop knowledge base application originally created by [nash_su](https://x.com/nash_su), implementing [Andrej Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). We inherit the core concepts: the three-layer vault architecture (raw sources → wiki → schema), the two-step chain-of-thought ingest pipeline, the knowledge graph with 4-signal relevance model, the Rust backend agent runtime, and the cross-platform Tauri packaging.
 
-This project is based on [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — a methodology for building personal knowledge bases using LLMs. llm_wiki is created and maintained by [nash_su](https://x.com/nash_su), who implemented the core ideas as a full desktop application with significant enhancements.
+**However, WikiMind goes substantially beyond the original.** We introduce an entirely new layer of autonomous knowledge maintenance:
 
-<p align="center">
-  <img src="assets/llm_wiki_arch.jpg" width="100%" alt="LLM Wiki Architecture">
-</p>
+| Capability | llm_wiki (Original) | WikiMind (This Project) |
+|---|---|---|
+| Knowledge compilation | ✅ Two-step ingest | ✅ Two-step ingest + **post-ingest claim extraction** |
+| Knowledge freshness | ❌ Static once written | ✅ **Confidence decay formula** with 4-parameter tuning |
+| Contradiction handling | ❌ Manual review only | ✅ **3-model judge ensemble** with weighted majority voting |
+| Background maintenance | ❌ None | ✅ **Cron-driven scheduler** (decay scan, re-verify, reconcile, health report) |
+| Source ingestion | PDF, DOCX, web clips | PDF, DOCX, web clips + **YouTube transcripts** + **GitHub repos** |
+| Page types | Concepts, entities, sources | Concepts, entities, sources + **claims/** + **contradictions/** |
+| Edit history | ❌ None | ✅ **Git-style unified diffs** stored per page rewrite |
+| Evaluation harness | ❌ None | ✅ **Single-judge vs. ensemble FPR comparison** |
+| Maintenance dashboard | ❌ None | ✅ **Health overview, decay curves, job history, contradiction panel, activity timeline** |
+| MCP tools | 9 tools | 9 original + **10 new WikiMind-specific tools** |
 
-## Credits
+---
 
-The foundational methodology comes from **Andrej Karpathy**'s [llm-wiki.md](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f), which describes the pattern of using LLMs to incrementally build and maintain a personal wiki. The original document is an abstract design pattern; this project is a concrete implementation with substantial extensions.
+## Core Philosophy: Decay-First Knowledge
 
-## What We Kept from the Original
+> *"Knowledge must be managed as a living, decaying asset that undergoes continuous, autonomous self-auditing."*
 
-The core architecture follows Karpathy's design faithfully:
+Most knowledge bases fail because they are treated as static archives. Information is dumped, and then it is forgotten. In reality, knowledge is dynamic, context-dependent, and subject to entropy. **It decays.**
 
-- **Three-layer architecture**: Raw Sources (immutable) → Wiki (LLM-generated) → Schema (rules & config)
-- **Three core operations**: Ingest, Query, Lint
-- **index.md** as the content catalog and LLM navigation entry point
-- **log.md** as the chronological operation record with parseable format
-- **[[wikilink]]** syntax for cross-references
-- **YAML frontmatter** on every wiki page
-- **Obsidian compatibility** — the wiki directory works as an Obsidian vault
-- **Human curates, LLM maintains** — the fundamental role division
+### The Three Pillars
 
-<p align="center">
-  <img src="assets/5-obsidian_compatibility.jpg" width="100%" alt="Obsidian Compatibility">
-</p>
+#### 1. Entropy Is the Default
+Every fact has a half-life. A statement about software versions, APIs, team structures, or system architecture is true today but is highly likely to be outdated next year. Rather than treating all written text as permanently correct, WikiMind assigns a **confidence score** to every claim, which decays over time. The rate of decay is governed by the volatility of its domain — software frameworks decay faster than mathematical proofs.
 
-## What We Changed & Added
+#### 2. Autonomous, Continuous Self-Auditing
+Static knowledge bases require manual gardening, which humans inevitably neglect. WikiMind delegates this work to an autonomous maintenance loop. Scheduled background workers constantly scan the vault:
+- **Decay Scan (Nightly):** Automatically lowers confidence scores according to the decay formula
+- **Re-Verification (Twice Weekly):** When a claim's confidence falls below the stale threshold, background LLM judges seek new source materials to re-verify it
+- **Contradiction Resolution (Weekly):** If conflicting claims are introduced, a multi-voter judge ensemble analyzes the evidence, resolves the dispute, and updates the wiki accordingly
+- **Health Report (Monthly):** Aggregate vault statistics on freshness distribution, job history, and system health
 
-### 1. From CLI to Desktop Application
+#### 3. Review Over Erasure
+Autonomous agents must not silently delete human-curated wiki pages. When auditing reveals high decay or contradictions, WikiMind creates actionable **Review Items** for the user. The system serves as a co-pilot that highlights blind spots, suggesting merges, updates, or disputes for human-in-the-loop validation.
 
-The original is an abstract pattern document designed to be copy-pasted to an LLM agent. We built it into a **full cross-platform desktop application** with:
-- **Three-column layout**: Knowledge Tree / File Tree (left) + Chat (center) + Preview (right)
-- **Icon sidebar** for switching between Wiki, Sources, Search, Graph, Lint, Review, Deep Research, Settings
-- **Custom resizable panels** — drag-to-resize left and right panels with min/max constraints
-- **Activity panel** — real-time processing status showing file-by-file ingest progress
-- **All state persisted** — conversations, settings, review items, project config survive restarts
-- **Scenario templates** — Research, Reading, Personal Growth, Business, General — each pre-configures purpose.md and schema.md
+---
 
-### 2. Purpose.md — The Wiki's Soul
+## What WikiMind Adds Beyond `llm_wiki`
 
-The original has Schema (how the wiki works) but no formal place for **why** the wiki exists. We added `purpose.md`:
-- Defines goals, key questions, research scope, evolving thesis
-- LLM reads it during every ingest and query for context
-- LLM can suggest updates based on usage patterns
-- Different from schema — schema is structural rules, purpose is directional intent
+### Phase 0: Repository Rebrand
+- Renamed all references from `LLM Wiki` → `WikiMind` across Tauri config, Cargo.toml, package.json, MCP server, Chrome extension, i18n strings, and UI components
+- Changed project directory convention from `.llm-wiki/` → `.wikimind/` with backward-compatible migration
+- Replaced all MCP tool names from `llm_wiki_*` → `wikimind_*`
 
-### 3. Two-Step Chain-of-Thought Ingest
+### Phase 1: Claim Infrastructure
+- Created `wiki/claims/` as a first-class page type with rich YAML frontmatter (confidence, source_count, last_verified, freshness_state, domain_volatility, sources array, history array)
+- Built the **decay engine** in Rust (`src-tauri/src/maintenance/decay.rs`) implementing the exponential decay formula with configurable parameters
+- Built the **claim manager** (`claims.rs`) with CRUD operations, freshness filtering, and sorted listing
+- Built the **contradiction manager** (`contradictions.rs`) with status transitions (open → under_review → resolved/escalated) and bidirectional claim linking
+- Extended concept/entity page frontmatter with `claim_count`, `stale_claim_count`, `avg_confidence`, `last_audited`
+- Created frontend claim list view and detail view components
 
-The original describes a single-step ingest where the LLM reads and writes simultaneously. We split it into **two sequential LLM calls** for significantly better quality:
+### Phase 2: Claim Extraction Pipeline
+- Added a **post-ingest claim extraction pass** — after wiki pages are created, an LLM pass extracts atomic verifiable claims and deduplicates them against existing claims via vector search
+- Claims are automatically linked to parent concept/entity pages
 
+### Phase 3: Maintenance Scheduler
+- Built a **Tokio-based interval scheduler** that parses cron expressions from `.wikimind/maintenance/schedule.json`
+- Implemented the **re-research pipeline**: detect stale claims → web search for new evidence → compare → update confidence or create contradiction
+- Added **page rewrite with history tracking** — every automated page update generates a Git-style unified diff stored in `.wikimind/history/`
+- Job logging to `.wikimind/maintenance/jobs.jsonl` with structured metrics
+
+### Phase 4: Judge Ensemble
+- Built the **multi-voter LLM judge ensemble** (`ensemble.rs`) — three independent LLMs from different model families evaluate each contradiction
+- Weighted majority voting with configurable escalation threshold
+- **Evaluation harness** (`eval.rs`) for comparing single-judge vs. ensemble false-positive rates using labeled test cases
+- API budget tracking with monthly caps
+
+### Phase 5: Maintenance Dashboard
+- Built 7 React dashboard panels: Health Overview (with donut chart), Decay Curves (Recharts line chart), Job History, Contradictions Panel, Activity Timeline, Ensemble Evaluation Display
+- Added Maintenance sidebar tab with real-time data from Tauri commands
+
+### Phase 6: Advanced Source Loaders & MCP Extension
+- **YouTube Ingestion:** Shell out to `youtube-transcript-api`, parse JSON transcript, feed to ingest pipeline
+- **GitHub Ingestion:** Shallow clone, read README/docs/key source files, extract architectural concepts and claims
+- Extended MCP server with 10 new tools: `wikimind_guide`, `wikimind_create`, `wikimind_edit`, `wikimind_append`, `wikimind_delete`, `wikimind_lint`, `wikimind_claims`, `wikimind_contradictions`, `wikimind_decay_status`, `wikimind_maintenance_log`
+
+---
+
+## Feature Deep Dive
+
+### Two-Step Chain-of-Thought Ingest (Inherited)
 ```
 Step 1 (Analysis): LLM reads source → structured analysis
   - Key entities, concepts, arguments
   - Connections to existing wiki content
   - Contradictions & tensions with existing knowledge
-  - Recommendations for wiki structure
 
 Step 2 (Generation): LLM takes analysis → generates wiki files
-  - Source summary with frontmatter (type, title, sources[])
-  - Entity pages, concept pages with cross-references
+  - Source summary with frontmatter
+  - Entity/concept pages with cross-references
   - Updated index.md, log.md, overview.md
   - Review items for human judgment
-  - Search queries for Deep Research
+
+Step 3 (NEW - Claim Extraction): Extract atomic claims
+  - Deduplicate against existing claims via vector search
+  - Create claims/*.md with initial confidence
+  - Link to parent concepts/entities
 ```
 
-Additional ingest enhancements beyond the original:
-- **SHA256 incremental cache** — source file content is hashed before ingest; unchanged files are skipped automatically, saving LLM tokens and time
-- **Persistent ingest queue** — serial processing prevents concurrent LLM calls; queue persisted to disk, survives app restart; failed tasks auto-retry up to 3 times
-- **Folder import** — recursive folder import preserving directory structure; folder path passed to LLM as classification context (e.g., "papers > energy" helps categorize content)
-- **Source folder auto-watch** — files added, edited, or deleted in `raw/sources/` outside the app are picked up automatically and reuse the same ingest/delete lifecycle as in-app actions
-- **Queue visualization** — Activity Panel shows progress bar, pending/processing/failed tasks with cancel and retry buttons
-- **Auto-embedding** — when vector search is enabled, new pages are automatically embedded after ingest
-- **Source traceability** — every generated wiki page includes a `sources: []` field in YAML frontmatter, linking back to the raw source files that contributed to it
-- **overview.md auto-update** — global summary page regenerated on every ingest to reflect the latest state of the wiki
-- **Guaranteed source summary** — fallback ensures a source summary page is always created, even if the LLM omits it
-- **Language-aware generation** — LLM responds in the user's configured language (English or Chinese)
-- **Progressive Sources view** — large source folders render progressively while scrolling, keeping big source collections responsive
-
-### 4. Knowledge Graph with Relevance Model
-
-<p align="center">
-  <img src="assets/3-knowledge_graph.jpg" width="100%" alt="Knowledge Graph">
-</p>
-
-The original mentions `[[wikilinks]]` for cross-references but has no graph analysis. We built a **full knowledge graph visualization and relevance engine**:
-
-**4-Signal Relevance Model:**
+### Knowledge Graph with 4-Signal Relevance Model (Inherited)
 | Signal | Weight | Description |
 |--------|--------|-------------|
 | Direct link | ×3.0 | Pages linked via `[[wikilinks]]` |
-| Source overlap | ×4.0 | Pages sharing the same raw source (via frontmatter `sources[]`) |
-| Adamic-Adar | ×1.5 | Pages sharing common neighbors (weighted by neighbor degree) |
-| Type affinity | ×1.0 | Bonus for same page type (entity↔entity, concept↔concept) |
+| Source overlap | ×4.0 | Pages sharing the same raw source |
+| Adamic-Adar | ×1.5 | Pages sharing common neighbors |
+| Type affinity | ×1.0 | Bonus for same page type |
 
-**Graph Visualization (sigma.js + graphology + ForceAtlas2):**
-- Node colors by page type or community, sizes scaled by link count (√ scaling)
-- Edge thickness and color by relevance weight (green=strong, gray=weak)
-- Hover interaction: neighbors stay visible, non-neighbors dim, edges highlight with relevance score label
-- Zoom controls (ZoomIn, ZoomOut, Fit-to-screen)
-- Position caching prevents layout jumps when data updates
-- Legend switches between type counts and community info based on coloring mode
+Visualized with **sigma.js + graphology + ForceAtlas2**, including Louvain community detection, cohesion scoring, and interactive graph insights (surprising connections, knowledge gaps, bridge nodes).
 
-### 5. Louvain Community Detection
+### Rust Backend Chat Agent with Skills (Inherited + Extended)
+The agent runtime supports tool-using chat with wiki search, source search, graph search, web search, workspace file tools, and shell commands. WikiMind extends it with:
+- `claims.list` / `claims.create` / `contradictions.list` / `decay.status` tools
+- **Skill management**: scan and enable local `SKILL.md` folders, select skills per conversation with `/skill`
+- **Generated workspace outputs**: files produced by Agent tools are shown as previews
 
-Not in the original. Automatic discovery of knowledge clusters using the **Louvain algorithm** (graphology-communities-louvain):
-
-- **Auto-clustering** — discovers which pages naturally group together based on link topology, independent of predefined page types
-- **Type / Community toggle** — switch between coloring nodes by page type (entity, concept, source...) or by discovered knowledge cluster
-- **Cohesion scoring** — each community scored by intra-edge density (actual edges / possible edges); low-cohesion clusters (< 0.15) flagged with warning
-- **12-color palette** — distinct visual separation between clusters
-- **Community legend** — shows top node label, member count, and cohesion per cluster
-
-<p align="center">
-  <img src="assets/kg_community.jpg" width="100%" alt="Louvain Community Detection">
-</p>
-
-### 6. Graph Insights — Surprising Connections & Knowledge Gaps
-
-Not in the original. The system **automatically analyzes graph structure** to surface actionable insights:
-
-**Surprising Connections:**
-- Detects unexpected relationships: cross-community edges, cross-type links, peripheral↔hub couplings
-- Composite surprise score ranks the most noteworthy connections
-- Dismissable — mark connections as reviewed so they don't reappear
-
-**Knowledge Gaps:**
-- **Isolated pages** (degree ≤ 1) — pages with few or no connections to the rest of the wiki
-- **Sparse communities** (cohesion < 0.15, ≥ 3 pages) — knowledge areas with weak internal cross-references
-- **Bridge nodes** (connecting 3+ clusters) — critical junction pages that hold multiple knowledge areas together
-
-**Interactive:**
-- Click any insight card to **highlight** corresponding nodes and edges in the graph; click again to deselect
-- Knowledge gaps and bridge nodes have a **Deep Research button** — triggers LLM-optimized research with domain-aware topics (reads overview.md + purpose.md for context)
-- Research topic shown in **editable confirmation dialog** before starting — user can refine topic and search queries
-
-<p align="center">
-  <img src="assets/kg_insights.jpg" width="100%" alt="Graph Insights">
-</p>
-
-### 7. Optimized Query Retrieval Pipeline
-
-The original describes a simple query where the LLM reads relevant pages. We built a **multi-phase retrieval pipeline** with optional vector search and budget control:
-
-```
-Phase 1: Tokenized Search
-  - English: word splitting + stop word removal
-  - Chinese: CJK bigram tokenization (每个 → [每个, 个…])
-  - Title match bonus (+10 score)
-  - Searches both wiki/ and raw/sources/
-
-Phase 1.5: Vector Semantic Search (optional)
-  - Embedding via any OpenAI-compatible /v1/embeddings endpoint
-  - Stored in LanceDB (Rust backend) for fast ANN retrieval
-  - Cosine similarity finds semantically related pages even without keyword overlap
-  - Results merged into search: boosts existing matches + adds new discoveries
-
-Phase 2: Graph Expansion
-  - Top search results used as seed nodes
-  - 4-signal relevance model finds related pages
-  - 2-hop traversal with decay for deeper connections
-
-Phase 3: Budget Control
-  - Configurable context window: 4K → 1M tokens
-  - Proportional allocation: 60% wiki pages, 20% chat history, 5% index, 15% system
-  - Pages prioritized by combined search + graph relevance score
-
-Phase 4: Context Assembly
-  - Numbered pages with full content (not just summaries)
-  - System prompt includes: purpose.md, language rules, citation format, index.md
-  - LLM instructed to cite pages by number: [1], [2], etc.
-```
-
-**Vector Search** is fully optional — disabled by default, enabled in Settings with independent endpoint, API key, and model configuration. When disabled, the pipeline falls back to tokenized search + graph expansion. Benchmark: overall recall improved from 58.2% to 71.4% with vector search enabled.
-
-### 8. Multi-Conversation Chat with Persistence
-
-The original has a single query interface. We built **full multi-conversation support**:
-
-- **Independent chat sessions** — create, rename, delete conversations
-- **Conversation sidebar** — quick switching between topics
-- **Per-conversation persistence** — each conversation saved to `.llm-wiki/chats/{id}.json`
-- **Configurable history depth** — limit how many messages are sent as context (default: 10)
-- **Cited references panel** — collapsible section on each response showing which wiki pages were used, grouped by type with icons
-- **Reference persistence** — cited pages stored directly in message data, stable across restarts
-- **Regenerate** — re-generate the last response with one click (removes last assistant + user message pair, re-sends)
-- **Save to Wiki** — archive valuable answers to `wiki/queries/`, then auto-ingest to extract entities/concepts into the knowledge network
-
-### 9. Rust Backend Chat Agent & Skills
-
-Not in the original. Chat now runs through a Rust backend Agent runtime rather than a browser-only TypeScript loop:
-
-- **Tool-using Agent** — can choose wiki search, source search, graph search, web search, AnyTXT, workspace file tools, approved shell commands, and skill file reads
-- **Skill management** — scan project and user skill folders, enable or disable skills, and pick a skill per conversation with `/skill` completion
-- **Generated workspace outputs** — files produced by Agent tools are kept under `agent-workspace/`, shown as generated outputs, and can be previewed or opened from the chat
-- **User interaction forms** — skills can ask for structured user input such as single choice, multiple choice, or free text without hardcoding skill-specific UI
-- **Safer execution model** — project workspace commands can continue smoothly, while external shell commands still require explicit approval
-
-### 10. Thinking / Reasoning Display
-
-Not in the original. For LLMs that emit `<think>` blocks (DeepSeek, QwQ, etc.):
-
-- **Streaming thinking** — rolling 5-line display with opacity fade during generation
-- **Collapsed by default** — thinking blocks hidden after completion, click to expand
-- **Visual separation** — thinking content shown in distinct style, separate from the main response
-
-### 11. Markdown Rendering: KaTeX Math & Mermaid Diagrams
-
-Not in the original. Rich Markdown rendering across chat and preview:
-
-- **KaTeX rendering** — inline `$...$` and block `$$...$$` formulas rendered via remark-math + rehype-katex
-- **Milkdown math plugin** — preview editor renders math natively via @milkdown/plugin-math
-- **Auto-detection** — bare `\begin{aligned}` and other LaTeX environments automatically wrapped with `$$` delimiters
-- **Unicode fallback** — 100+ symbol mappings (α, ∑, →, ≤, etc.) for simple inline notation outside math blocks
-- **Mermaid code blocks** — fenced `mermaid` diagrams render directly as flowcharts, sequence diagrams, and other Mermaid-supported visuals
-- **Compact Mermaid errors** — syntax failures are captured inside a small error card instead of spilling raw parser output into the chat
-
-### 12. Review System (Async Human-in-the-Loop)
-
-The original suggests staying involved during ingest. We added an **asynchronous review queue**:
-
-- LLM flags items needing human judgment during ingest
-- **Predefined action types**: Create Page, Deep Research, Skip — constrained to prevent LLM hallucination of arbitrary actions
-- **Search queries generated at ingest time** — LLM pre-generates optimized web search queries for each review item
-- User handles reviews at their convenience — doesn't block ingest
-
-### 13. Deep Research
-
-<p align="center">
-  <img src="assets/1-deepresearch.jpg" width="100%" alt="Deep Research">
-</p>
-
-Not in the original. When the LLM identifies knowledge gaps:
-
-- **Web search** via Tavily, SerpApi, or SearXNG finds relevant sources with full content extraction (no truncation)
-- **Provider-specific configuration** — Tavily and SerpApi use independent API keys; SerpApi supports selectable engines, while SearXNG uses a configured instance URL and search categories
-- **Multiple search queries** per topic — LLM-generated at ingest time, optimized for search engines
-- **LLM-optimized research topics** — when triggered from Graph Insights, LLM reads overview.md + purpose.md to generate domain-specific topics and queries (not generic keywords)
-- **User confirmation dialog** — editable topic and search queries shown for review before research starts
-- **LLM synthesizes** findings into a wiki research page with cross-references to existing wiki
-- **Thinking display** — `<think>` blocks shown as collapsible sections during synthesis, auto-scroll to latest content
-- **Auto-ingest** — research results automatically processed to extract entities/concepts into the wiki
-- **Task queue** with 3 concurrent tasks
-- **Research Panel** — dedicated sidebar panel with dynamic height, real-time streaming progress
-
-### 14. Browser Extension (Web Clipper)
-
-<p align="center">
-  <img src="assets/4-chrome_extension_webclipper.jpg" width="100%" alt="Chrome Extension Web Clipper">
-</p>
-
-The original mentions Obsidian Web Clipper. We built a **dedicated Chrome Extension** (Manifest V3):
-
-- **Mozilla Readability.js** for accurate article extraction (strips ads, nav, sidebars)
-- **Turndown.js** for HTML → Markdown conversion with table support
-- **Project picker** — choose which wiki to clip into (supports multi-project)
-- **Local HTTP API** (port 19827, tiny_http) — Extension ↔ App communication
-- **Auto-ingest** — clipped content automatically triggers the two-step ingest pipeline
-- **Clip watcher** — polls every 3 seconds for new clips, processes automatically
-- **Offline preview** — shows extracted content even when app is not running
-
-### 15. Multi-format Document Support
-
-The original focuses on text/markdown. We support structured extraction preserving document semantics:
-
+### Multi-Format Document Support (Inherited)
 | Format | Method |
 |--------|--------|
-| PDF | Built-in pdf-extract (Rust) with file caching; optional MinerU cloud parsing for tables, formulas, and complex layouts |
-| DOCX | docx-rs — headings, bold/italic, lists, tables → structured Markdown |
-| PPTX | ZIP + XML — slide-by-slide extraction with heading/list structure |
-| XLSX/XLS/ODS | calamine — proper cell types, multi-sheet support, Markdown tables |
-| Images | Native preview (png, jpg, gif, webp, svg, etc.) |
+| PDF | Built-in pdfium (Rust) + optional MinerU cloud parsing |
+| DOCX | docx-rs — headings, bold/italic, lists, tables |
+| PPTX | ZIP + XML — slide-by-slide extraction |
+| XLSX/XLS/ODS | calamine — proper cell types, multi-sheet |
+| Images | Native preview (png, jpg, gif, webp, svg) |
 | Video/Audio | Built-in player |
 | Web clips | Readability.js + Turndown.js → clean Markdown |
+| **YouTube** | **NEW** — youtube-transcript-api → structured Markdown |
+| **GitHub** | **NEW** — shallow clone → README/docs extraction |
 
-> MinerU is optional. When enabled, PDF files are uploaded to MinerU cloud for parsing; keep the built-in parser for sensitive documents. If MinerU fails, LLM Wiki falls back to the built-in parser. MinerU usage is subject to its file size, page count, and quota limits.
+### Chrome Web Clipper (Inherited)
+Manifest V3 extension with Mozilla Readability.js, Turndown.js, project picker, and auto-ingest via local HTTP API.
 
-### 16. File Deletion with Cascade Cleanup
+---
 
-The original has no deletion mechanism. We added **intelligent cascade deletion**:
+## The Decay Formula
 
-- Deleting a source file removes its wiki summary page
-- **3-method matching** finds related wiki pages: frontmatter `sources[]` field, source summary page name, frontmatter section references
-- **Shared entity preservation** — entity/concept pages linked to multiple sources only have the deleted source removed from their `sources[]` array, not deleted entirely
-- **Index cleanup** — removed pages are purged from index.md
-- **Wikilink cleanup** — dead `[[wikilinks]]` to deleted pages are removed from remaining wiki pages
+### Definition
 
-### 17. Configurable Context Window
+```
+C(t) = C_base × exp(-λ_eff × Δt)
 
-Not in the original. Users can configure how much context the LLM receives:
+λ_eff = λ₀ × V × (1 / (1 + α × S)) × (1 + β × K)
+```
 
-- **Slider from 4K to 1M tokens** — adapts to different LLM capabilities
-- **Proportional budget allocation** — larger windows get proportionally more wiki content
-- **60/20/5/15 split** — wiki pages / chat history / index / system prompt
+| Parameter | Default | Meaning |
+|---|---|---|
+| `λ₀` | 0.01 | Base decay constant. Half-life ≈ 69 days with no modifiers |
+| `V` | `{low: 0.5, medium: 1.0, high: 2.0}` | Domain volatility multiplier |
+| `α` | 0.3 | Source-damping factor. More sources → slower decay |
+| `S` | `source_count` | Number of independent corroborating sources |
+| `β` | 0.5 | Contradiction-acceleration factor |
+| `K` | `contradiction_count` | Number of unresolved contradictions |
 
-### 18. Cross-Platform Compatibility
+### Freshness Thresholds
 
-The original is platform-agnostic (abstract pattern). We handle concrete cross-platform concerns:
+| State | Condition | UI Color |
+|---|---|---|
+| `fresh` | `C(t) ≥ 0.7 × C_base` | 🟢 Green |
+| `aging` | `0.4 × C_base ≤ C(t) < 0.7 × C_base` | 🟡 Yellow |
+| `stale` | `0.2 × C_base ≤ C(t) < 0.4 × C_base` | 🟠 Orange |
+| `decayed` | `C(t) < 0.2 × C_base` | 🔴 Red |
 
-- **Path normalization** — unified `normalizePath()` used across 22+ files, backslash → forward slash
-- **Unicode-safe string handling** — char-based slicing instead of byte-based (prevents crashes on CJK filenames)
-- **macOS close-to-hide** — close button hides window (app stays running in background), click dock icon to restore, Cmd+Q to quit
-- **Windows/Linux close confirmation** — confirmation dialog before quitting to prevent accidental data loss
-- **Tauri v2** — native desktop on macOS, Windows, Linux
-- **GitHub Actions CI/CD** — automated builds for macOS (ARM + Intel), Windows (.msi), Linux (.deb / .AppImage)
-
-### 19. Other Additions
-
-- **i18n** — English + Chinese interface (react-i18next)
-- **Settings persistence** — LLM provider, API key, model, context size, language saved via Tauri Store
-- **Obsidian config** — auto-generated `.obsidian/` directory with recommended settings
-- **Markdown rendering** — GFM tables with borders, proper code blocks, wikilink processing in chat and preview
-- **Multi-provider LLM support** — OpenAI, Anthropic, Google, Ollama, Custom — each with provider-specific streaming and headers
-- **15-minute timeout** — long ingest operations won't fail prematurely
-- **dataVersion signaling** — graph and UI automatically refresh when wiki content changes
+---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
+|---|---|
 | Desktop | Tauri v2 (Rust backend) |
 | Frontend | React 19 + TypeScript + Vite |
 | UI | shadcn/ui + Tailwind CSS v4 |
 | Editor | Milkdown (ProseMirror-based WYSIWYG) |
 | Graph | sigma.js + graphology + ForceAtlas2 |
 | Search | Tokenized search + graph relevance + optional vector (LanceDB) |
-| Vector DB | LanceDB (Rust, embedded, optional) |
-| PDF | pdf-extract + optional MinerU cloud parser |
+| Vector DB | LanceDB (Rust, embedded) |
+| PDF | pdfium + optional MinerU cloud parser |
 | Office | docx-rs + calamine |
-| i18n | react-i18next |
+| Charts | Recharts (maintenance dashboard) |
+| Scheduler | Tokio intervals + cron expression parsing |
+| i18n | react-i18next (English + Chinese) |
 | State | Zustand |
 | LLM | Streaming fetch (OpenAI, Anthropic, Google, Ollama, Custom) |
 | Web Search | Tavily, SerpApi, SearXNG JSON API |
+| MCP | Node.js MCP server (19 tools) |
 
-## Installation
+---
 
-### Pre-built Binaries
+## Getting Started
 
-Download from [Releases](https://github.com/nashsu/llm_wiki/releases):
-- **macOS**: `.dmg` (Apple Silicon + Intel)
-- **Windows**: `.msi`
-- **Linux**: `.deb` / `.AppImage`
+### Prerequisites
+- **Node.js** v20+
+- **Rust** v1.75+ (with `cargo`)
+- **Protobuf Compiler** (`protoc`) — required by LanceDB's `lance-encoding` crate
+  - **Windows:** `winget install Google.Protobuf` (then set `$env:PROTOC` to the binary path)
+  - **macOS:** `brew install protobuf`
+  - **Linux:** `apt install protobuf-compiler` or equivalent
 
 ### Build from Source
 
 ```bash
-# Prerequisites: Node.js 20+, Rust 1.70+
-git clone https://github.com/nashsu/llm_wiki.git
-cd llm_wiki
+git clone https://github.com/rupanshsoni/Wiki-Mind-llm.git
+cd Wiki-Mind-llm
 npm install
-npm run tauri dev      # Development
-npm run tauri build    # Production build
+```
+
+#### Development (hot-reload)
+
+**Windows (PowerShell):**
+```powershell
+$env:PROTOC = "path\to\protoc.exe"
+npm run tauri dev
+```
+
+**macOS / Linux:**
+```bash
+export PROTOC=$(which protoc)
+npm run tauri dev
+```
+
+#### Production Build
+```bash
+npm run tauri build
 ```
 
 ### Chrome Extension
-
 1. Open `chrome://extensions`
 2. Enable "Developer mode"
 3. Click "Load unpacked"
 4. Select the `extension/` directory
 
-## Quick Start
-
+### Quick Start
 1. Launch the app → Create a new project (choose a template)
 2. Go to **Settings** → Configure your LLM provider (API key + model)
-3. Optional: configure **Web Search** providers and source folder auto-watch in Settings
-4. Go to **Sources** → Import documents (PDF, DOCX, MD, etc.)
-5. Watch the **Activity Panel** — LLM automatically builds wiki pages
-6. Use **Chat** to query your knowledge base
-7. Browse the **Knowledge Graph** to see connections
-8. Check **Review** for items needing your attention
-9. Run **Lint** periodically to maintain wiki health
+3. Optional: configure **Web Search** providers for Deep Research and re-verification
+4. Go to **Sources** → Import documents (PDF, DOCX, MD, YouTube URL, GitHub URL)
+5. Watch the **Activity Panel** — LLM automatically builds wiki pages and extracts claims
+6. Use **Chat** to query your knowledge base with source citations
+7. Browse the **Knowledge Graph** to see connections and communities
+8. Check the **Maintenance Dashboard** for claim freshness, decay curves, and job history
+9. Check **Review** for items needing your attention
+10. The scheduler runs automatically — claims decay, get re-verified, and contradictions get resolved in the background
 
-## Local HTTP API + MCP Server + AI Agent Skill
-
-LLM Wiki ships a built-in local HTTP API at `http://127.0.0.1:19828` (token-protected, `127.0.0.1`-only) so external tools — including AI agents like **Claude Code**, **Codex**, or any HTTP-capable script — can query your wiki:
-
-- `GET /api/v1/health` — server status (no auth)
-- `GET /api/v1/projects` — list projects
-- `GET /api/v1/projects/{id}/files` / `files/content` — read files and content
-- `GET /api/v1/projects/{id}/reviews?status=unresolved` — export Review tab items for wiki maintenance (`status`: `unresolved`, `resolved`, or `all`; optional `type` and `limit`)
-- `PATCH /api/v1/projects/{id}/reviews/{reviewId}` — update one Review item (JSON body `{ "resolved": true, "action": "label" }`; `resolved` defaults to true, pass false to reopen)
-- `POST /api/v1/projects/{id}/reviews/resolve` — bulk-resolve Review items (JSON body `{ "ids": [...], "action": "label" }`), returns `{ resolved, notFound, count }`; the Review tab's Refresh button re-reads the result from disk
-- `POST /api/v1/projects/{id}/search` — **hybrid** retrieval (keyword + vector) returning `mode`, `tokenHits`, `vectorHits`, per-result `vectorScore`
-- `POST /api/v1/projects/{id}/chat` — non-streaming backend Agent chat endpoint returning an assistant message, references, usage, and tool events for wiki/source/web/AnyTXT retrieval; `mode: "deep"` broadens evidence collection, while the full Deep Research workspace remains available in the desktop UI
-- `GET /api/v1/projects/{id}/graph` — wikilinks graph
-- `POST /api/v1/projects/{id}/sources/rescan` — trigger a backend rescan
-
-Enable the API, generate a token, and choose whether local unauthenticated access is allowed in **Settings → API + MCP**.
-
-For MCP-compatible clients, LLM Wiki also includes a local MCP server in `mcp-server/`. After building it with `npm run mcp:build`, **Settings → API + MCP** shows a copyable MCP client configuration with the correct local path for your machine. The MCP tools call the same API surface, so agent clients can list projects, read files, export unresolved Review items, run hybrid search, inspect the graph, trigger source rescans, and call the same Rust backend Agent chat endpoint without custom HTTP glue code.
-
-### Plug your AI agent in with one command
-
-A ready-made **agent skill** for LLM Wiki lives in its own repo. Install it into Claude Code / Codex / any skills-compatible runtime:
-
-```bash
-npx skills add https://github.com/nashsu/llm_wiki_skill.git --skill llm_wiki_skill
-```
-
-After install, the agent can answer prompts like "what does my LLM Wiki say about X", "search my 知识库 for Y", "show the neighborhood of node Z in my wiki graph", and "rescan my wiki sources" by talking to your locally-running app — read-only by default, citing wiki page paths so you can verify in-app.
-
-- **Skill repo**: <https://github.com/nashsu/llm_wiki_skill>
-- **Trigger discipline**: it intentionally does **not** trigger on generic "search my notes" / "check my Obsidian / Notion / Logseq" — only when you explicitly name LLM Wiki / `my wiki` / `知识库`.
+---
 
 ## Project Structure
 
+### Application Code
+```
+WikiMind/
+├── src-tauri/                        # Rust backend (Tauri v2)
+│   ├── src/
+│   │   ├── lib.rs                    # App lifecycle, plugin registration, managed state
+│   │   ├── main.rs                   # Entry point
+│   │   ├── api_server.rs             # HTTP API on :19828
+│   │   ├── clip_server.rs            # Chrome extension clip receiver
+│   │   ├── tray.rs                   # System tray menu
+│   │   ├── agent/
+│   │   │   ├── runtime.rs            # LLM tool-use loop with streaming
+│   │   │   ├── tools.rs              # Wiki/source/graph/web/claim tools
+│   │   │   ├── provider.rs           # Multi-provider LLM client
+│   │   │   ├── session.rs            # Conversation persistence
+│   │   │   ├── skills.rs             # SKILL.md discovery and injection
+│   │   │   └── context.rs            # Context assembly
+│   │   ├── commands/
+│   │   │   ├── fs.rs                 # File operations, PDF/DOCX/PPTX/XLSX extraction
+│   │   │   ├── project.rs            # Project CRUD
+│   │   │   ├── search.rs             # Keyword + vector hybrid search
+│   │   │   ├── vectorstore.rs        # LanceDB embedding storage
+│   │   │   ├── youtube.rs            # YouTube transcript ingestion
+│   │   │   ├── github.rs             # GitHub repo ingestion
+│   │   │   └── ...
+│   │   └── maintenance/              # ★ NEW: WikiMind maintenance engine
+│   │       ├── mod.rs                # Module aggregator
+│   │       ├── decay.rs              # Confidence decay formula
+│   │       ├── claims.rs             # Claim CRUD + freshness classification
+│   │       ├── contradictions.rs     # Contradiction CRUD + status transitions
+│   │       ├── scheduler.rs          # Tokio cron-based job scheduler
+│   │       ├── pipeline.rs           # Re-research orchestration pipeline
+│   │       ├── ensemble.rs           # Multi-voter LLM judge ensemble
+│   │       ├── eval.rs               # Single-judge vs. ensemble evaluation
+│   │       ├── extract.rs            # Post-ingest claim extraction
+│   │       ├── history.rs            # Git-style unified diff tracking
+│   │       └── jobs.rs               # Job log serialization
+│   └── tauri.conf.json
+├── src/                              # React 19 frontend
+│   ├── App.tsx                       # Main app with routing
+│   ├── components/
+│   │   ├── editor/                   # Milkdown WYSIWYG editor
+│   │   ├── graph/                    # sigma.js knowledge graph
+│   │   ├── chat/                     # Multi-conversation chat
+│   │   ├── review/                   # Async review queue
+│   │   ├── project/                  # Project creation/open dialogs
+│   │   ├── settings/                 # Settings panels
+│   │   ├── layout/                   # App layout, sidebar, file tree
+│   │   └── maintenance/              # ★ NEW: Dashboard panels
+│   │       ├── maintenance-dashboard.tsx
+│   │       ├── health-overview.tsx    # Donut chart, stats
+│   │       ├── decay-chart.tsx       # Recharts confidence curves
+│   │       ├── claims-list.tsx       # Filterable claim table
+│   │       ├── claim-detail.tsx      # Claim detail view
+│   │       ├── contradictions-panel.tsx
+│   │       ├── job-history.tsx       # Job log viewer
+│   │       └── activity-timeline.tsx # Unified event timeline
+│   ├── stores/                       # Zustand state management
+│   └── lib/                          # Utilities, ingest pipeline, search
+├── mcp-server/                       # Node.js MCP server (19 tools)
+├── extension/                        # Chrome web clipper
+├── frontend_skills/                  # UI/UX design skills
+└── docs/                             # Architecture, philosophy, data models
+```
+
+### Wiki Vault Structure (per project)
 ```
 my-wiki/
-├── purpose.md              # Goals, key questions, research scope
-├── schema.md               # Wiki structure rules, page types
+├── purpose.md                        # Goals, key questions, research scope
+├── schema.md                         # Wiki structure rules, page types
 ├── raw/
-│   ├── sources/            # Uploaded documents (immutable)
-│   └── assets/             # Local images
+│   ├── sources/                      # Uploaded documents (immutable)
+│   └── assets/                       # Local images
 ├── wiki/
-│   ├── index.md            # Content catalog
-│   ├── log.md              # Operation history
-│   ├── overview.md         # Global summary (auto-updated)
-│   ├── entities/           # People, organizations, products
-│   ├── concepts/           # Theories, methods, techniques
-│   ├── sources/            # Source summaries
-│   ├── queries/            # Saved chat answers + research
-│   ├── synthesis/          # Cross-source analysis
-│   └── comparisons/        # Side-by-side comparisons
-├── .obsidian/              # Obsidian vault config (auto-generated)
-└── .llm-wiki/              # App config, chat history, review items
+│   ├── index.md                      # Content catalog
+│   ├── log.md                        # Chronological operation record
+│   ├── overview.md                   # Global summary (auto-updated)
+│   ├── entities/                     # People, organizations, products
+│   ├── concepts/                     # Theories, methods, techniques
+│   ├── sources/                      # Source summaries
+│   ├── claims/                       # ★ Atomic verifiable assertions (with decay)
+│   ├── contradictions/               # ★ Documented disagreements between claims
+│   ├── queries/                      # Saved chat answers + research
+│   └── comparisons/                  # Side-by-side analysis
+├── .obsidian/                        # Obsidian vault config (auto-generated)
+└── .wikimind/                        # App config
+    ├── project.json                  # Project UUID and metadata
+    ├── chats/                        # Chat conversation history
+    ├── maintenance/
+    │   ├── schedule.json             # ★ Scheduler cron configuration
+    │   ├── jobs.jsonl                # ★ Maintenance job log
+    │   └── eval/                     # ★ Judge evaluation data
+    │       ├── cases.jsonl
+    │       └── results.jsonl
+    └── history/
+        └── *.diff                    # ★ Page rewrite diffs
 ```
 
-## Star History
+---
 
-<a href="https://www.star-history.com/?repos=nashsu%2Fllm_wiki&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=nashsu/llm_wiki&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=nashsu/llm_wiki&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=nashsu/llm_wiki&type=date&legend=top-left" />
- </picture>
-</a>
+## API & MCP Server
+
+### Local HTTP API
+WikiMind ships a built-in HTTP API at `http://127.0.0.1:19828` (token-protected, localhost-only):
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/v1/health` | GET | Server status |
+| `/api/v1/projects` | GET | List projects |
+| `/api/v1/projects/:id/files` | GET | List project files |
+| `/api/v1/projects/:id/search` | POST | Hybrid search (keyword + vector) |
+| `/api/v1/projects/:id/chat` | POST | Backend agent chat |
+| `/api/v1/projects/:id/graph` | GET | Knowledge graph data |
+| `/api/v1/projects/:id/claims` | GET | List claims with freshness filter |
+| `/api/v1/projects/:id/contradictions` | GET | List contradictions |
+| `/api/v1/projects/:id/maintenance/status` | GET | Scheduler and decay overview |
+| `/api/v1/projects/:id/maintenance/jobs` | GET | Job history |
+| `/api/v1/projects/:id/maintenance/run` | POST | Trigger a maintenance job |
+| `/api/v1/projects/:id/ingest/youtube` | POST | Ingest YouTube transcript |
+| `/api/v1/projects/:id/ingest/github` | POST | Ingest GitHub repository |
+
+### MCP Server
+The bundled MCP server in `mcp-server/` exposes 19 tools for downstream AI agents:
+
+**Original (from llm_wiki):** `wikimind_search`, `wikimind_read`, `wikimind_list`, `wikimind_graph`, `wikimind_reviews`, `wikimind_resolve_review`, `wikimind_bulk_resolve`, `wikimind_rescan`, `wikimind_chat`
+
+**New (WikiMind additions):** `wikimind_guide`, `wikimind_create`, `wikimind_edit`, `wikimind_append`, `wikimind_delete`, `wikimind_lint`, `wikimind_claims`, `wikimind_contradictions`, `wikimind_decay_status`, `wikimind_maintenance_log`
+
+---
+
+## Agent Skills
+
+WikiMind supports **agent skills** — structured instruction files (`SKILL.md`) that extend the chat agent's capabilities:
+- Scan project and user skill folders automatically
+- Enable/disable skills in Settings
+- Select a skill per conversation with `/skill` completion
+- Skills can request structured user input (single choice, multiple choice, free text)
+
+The project includes frontend design skills in `frontend_skills/` for premium UI/UX guidance.
+
+---
+
+## Credits
+
+- **Base Application:** [nashsu/llm_wiki](https://github.com/nashsu/llm_wiki) by [nash_su](https://x.com/nash_su) — the production desktop application with knowledge graph, vector search, agent runtime, review system, and cross-platform packaging
+- **Original Pattern:** [Andrej Karpathy's LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — the methodology for building personal knowledge bases using LLMs
+- **Feature Donors:** Patterns from [obsidian-second-brain](https://github.com/) (bi-temporal facts, reconciliation logic, scheduled agents) and [llmwiki](https://github.com/) (MCP tool surface, VaultFS abstraction) were adapted for WikiMind's architecture
+
+---
 
 ## License
 
-This project is licensed under the **GNU General Public License v3.0** — see [LICENSE](LICENSE) for details.
+MIT License. Built upon open-source code from [llm_wiki](https://github.com/nashsu/llm_wiki).
