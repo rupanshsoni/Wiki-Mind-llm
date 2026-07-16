@@ -1,0 +1,36 @@
+{
+  "time_warp_factor": 1.0,
+  "jobs": [
+    {
+      "name": "decay_scan",
+      "cron": "0 0 * * * *",
+      "enabled": true
+    },
+    {
+      "name": "re_verification",
+      "cron": "0 0 */3 * * *",
+      "enabled": true
+    },
+    {
+      "name": "contradiction_resolution",
+      "cron": "0 0 * * * 0",
+      "enabled": true
+    },
+    {
+      "name": "health_report",
+      "cron": "0 0 1 * * *",
+      "enabled": true
+    }
+  ],
+  "ensemble": {
+    "judges": [],
+    "fallback_to_single_judge": true,
+    "escalation_threshold": 0.6
+  },
+  "api_budget": {
+    "monthly_cap_usd": 10.0,
+    "current_month_spent_usd": 0.0,
+    "reset_day": 1,
+    "last_reset_month": null
+  }
+}

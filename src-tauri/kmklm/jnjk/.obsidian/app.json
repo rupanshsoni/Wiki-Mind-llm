@@ -1,0 +1,11 @@
+{
+  "attachmentFolderPath": "raw/assets",
+  "userIgnoreFilters": [
+    ".cache",
+    ".wikimind",
+    ".superpowers"
+  ],
+  "useMarkdownLinks": false,
+  "newLinkFormat": "shortest",
+  "showUnsupportedFiles": false
+}
